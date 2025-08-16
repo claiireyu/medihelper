@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication History - MediHelper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="i18n.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='index.html'" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-900" data-i18n="history.medicationHistory">Medication History</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="filterBtn" class="text-gray-500 hover:text-gray-700 flex items-center space-x-1">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"></path>
+                            </svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="filterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <div class="py-1">
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span data-i18n="history.last7Days">Last 7 days</span>
+                                </button>
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span data-i18n="history.last30Days">Last 30 days</span>
+                                </button>
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    <span data-i18n="history.last3Months">Last 3 months</span>
+                                </button>
+                                <hr class="my-1 border-gray-200">
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    <span data-i18n="history.refreshData">Refresh data</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Page Header with Greeting -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2" data-greeting data-i18n="history.hiThere">Hi there</h2>
+            <p class="text-gray-600" data-i18n="history.viewHistoryAndTrends">View your medication history and trends</p>
+        </div>
+        
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600" data-i18n="history.takenToday">Taken Today</p>
+                        <p id="takenToday" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600" data-i18n="history.pending">Pending</p>
+                        <p id="pendingToday" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600" data-i18n="history.totalMedications">Total Medications</p>
+                        <p id="totalMedications" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button id="recentTab" class="border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button active">
+                        <span data-i18n="history.recentActivity">Recent Activity</span>
+                    </button>
+                    <button id="medicationsTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
+                        <span data-i18n="history.allMedications">All Medications</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Recent Activity Tab -->
+        <div id="recentContent" class="tab-content">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900" data-i18n="history.recentDoseHistory">Recent Dose History</h3>
+                    <p class="text-sm text-gray-600" data-i18n="history.medicationIntakePast7Days">Your medication intake over the past 7 days</p>
+                </div>
+                <div id="recentHistory" class="divide-y divide-gray-200">
+                    <!-- History items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- All Medications Tab -->
+        <div id="medicationsContent" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900" data-i18n="history.allMedicationsHeader">All Medications</h3>
+                    <p class="text-sm text-gray-600" data-i18n="history.completeListOfMedications">Complete list of your medications</p>
+                </div>
+                <div id="allMedications" class="divide-y divide-gray-200">
+                    <!-- Medication items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p class="text-gray-700" data-i18n="history.loadingHistory">Loading history...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='index.html'">
+                    <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.home">Home</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='schedule.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.schedule">Schedule</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='verify.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.verify">Verify</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='add-medication.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.add">Add</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-primary-600">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="text-xs font-medium" data-i18n="navigation.history">History</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Add bottom padding to account for fixed navigation -->
+    <div class="h-20"></div>
+
+    <script>
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadRecentHistory();
+            loadAllMedications();
+            
+            // Set up tab switching
+            document.getElementById('recentTab').addEventListener('click', () => switchTab('recent'));
+            document.getElementById('medicationsTab').addEventListener('click', () => switchTab('medications'));
+            
+            // Set up dropdown functionality
+            setupDropdown();
+            
+            // Check if i18n is ready and refresh content if needed
+            checkI18nAndRefresh();
+        });
+
+        // Function to check if i18n is ready and refresh content
+        function checkI18nAndRefresh() {
+            // Wait a bit for i18n to initialize
+            setTimeout(() => {
+                if (window.i18n && typeof window.i18n.t === 'function') {
+                    console.log('✅ i18n system ready, refreshing content...');
+                    // Refresh all dynamic content to ensure proper translation
+                    refreshDynamicContent();
+                } else {
+                    console.log('⏳ i18n not ready yet, retrying...');
+                    // Retry after a short delay
+                    setTimeout(checkI18nAndRefresh, 100);
+                }
+            }, 200);
+        }
+
+        // Language change handler
+        window.addEventListener('languageChanged', function() {
+            console.log('🔄 Language changed on history page, refreshing content...');
+            
+            // Refresh static HTML content with data-i18n attributes
+            if (window.i18n && typeof window.i18n.updatePage === 'function') {
+                window.i18n.updatePage();
+            } else {
+                // Manual fallback: refresh static content
+                refreshStaticContent();
+            }
+            
+            // Refresh dynamic content
+            refreshDynamicContent();
+        });
+        
+        // Also check if language has changed since page load and refresh if needed
+        if (window.i18n) {
+            const currentLang = window.i18n.getCurrentLanguage();
+            const savedLang = localStorage.getItem('language') || 'en';
+            if (currentLang !== savedLang) {
+                console.log('🔄 Language preference changed, refreshing content...');
+                setTimeout(() => {
+                    refreshStaticContent();
+                    refreshDynamicContent();
+                }, 100);
+            }
+        }
+
+        // Function to refresh static content with data-i18n attributes
+        function refreshStaticContent() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing static content...');
+            
+            // Get all elements with data-i18n attributes
+            const elements = document.querySelectorAll('[data-i18n]');
+            
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (key) {
+                    const translatedText = window.i18n.t(key);
+                    if (translatedText && translatedText !== key) {
+                        element.textContent = translatedText;
+                    }
+                }
+            });
+            
+            console.log(`✅ Refreshed ${elements.length} static elements`);
+        }
+
+        // Function to refresh dynamic content when language changes
+        function refreshDynamicContent() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing dynamic content...');
+            
+            // Refresh date labels in recent history
+            refreshDateLabels();
+            
+            // Refresh empty state messages
+            refreshEmptyStateMessages();
+            
+            // Refresh dynamic text
+            refreshDynamicText();
+        }
+
+        function setupDropdown() {
+            const filterBtn = document.getElementById('filterBtn');
+            const filterDropdown = document.getElementById('filterDropdown');
+            
+            // Toggle dropdown on button click
+            filterBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                filterDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Handle dropdown item clicks
+            const dropdownItems = filterDropdown.querySelectorAll('button');
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const text = this.querySelector('span').textContent;
+                    handleFilterSelection(text);
+                    filterDropdown.classList.add('hidden');
+                });
+            });
+        }
+
+        function handleFilterSelection(selection) {
+
+            
+            switch(selection) {
+                case window.i18n ? window.i18n.t('history.last7Days') : 'Last 7 days':
+                case 'Last 7 days':
+                    loadRecentHistory(7);
+                    break;
+                case window.i18n ? window.i18n.t('history.last30Days') : 'Last 30 days':
+                case 'Last 30 days':
+                    loadRecentHistory(30);
+                    break;
+                case window.i18n ? window.i18n.t('history.last3Months') : 'Last 3 months':
+                case 'Last 3 months':
+                    loadRecentHistory(90);
+                    break;
+                case window.i18n ? window.i18n.t('history.refreshData') : 'Refresh data':
+                case 'Refresh data':
+                    loadStats();
+                    loadRecentHistory();
+                    loadAllMedications();
+                    break;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'border-primary-500', 'text-primary-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            if (tabName === 'recent') {
+                document.getElementById('recentContent').classList.remove('hidden');
+                document.getElementById('recentTab').classList.add('active', 'border-primary-500', 'text-primary-600');
+                document.getElementById('recentTab').classList.remove('border-transparent', 'text-gray-500');
+            } else if (tabName === 'medications') {
+                document.getElementById('medicationsContent').classList.remove('hidden');
+                document.getElementById('medicationsTab').classList.add('active', 'border-primary-500', 'text-primary-600');
+                document.getElementById('medicationsTab').classList.remove('border-transparent', 'text-gray-500');
+            }
+        }
+
+        async function loadStats() {
+            try {
+                // Load today's schedule to get today's taken/pending counts
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayString = `${year}-${month}-${day}`;
+                
+                // Get today's schedule with taken status
+                const scheduleResponse = await makeTimezoneAwareAPICall(API.getMedicationSchedule, todayString, true);
+                const scheduleData = await scheduleResponse.json();
+                
+                let takenToday = 0;
+                let totalScheduledToday = 0;
+                
+                if (scheduleData.success) {
+                    const schedule = scheduleData.schedule;
+                    const allMeds = [
+                        ...(schedule.morning || []),
+                        ...(schedule.afternoon || []),
+                        ...(schedule.evening || [])
+                    ];
+                    
+                    totalScheduledToday = allMeds.length;
+                    takenToday = allMeds.filter(med => med.taken).length;
+                }
+                
+                const pendingToday = totalScheduledToday - takenToday;
+                
+                // Update today's taken/pending
+                document.getElementById('takenToday').textContent = takenToday;
+                document.getElementById('pendingToday').textContent = Math.max(0, pendingToday);
+                
+                // Use the dashboard stats API for total medications count (to match home screen)
+                const dashboardResponse = await API.getDashboardStats();
+                const dashboardData = await dashboardResponse.json();
+                
+                if (dashboardData.success) {
+                    // Use the same logic as the home screen
+                    document.getElementById('totalMedications').textContent = dashboardData.stats.activeMedications;
+                } else {
+                    // Fallback to counting unique medications ourselves
+                    const medicationsResponse = await API.getMedications();
+                    const medicationsData = await medicationsResponse.json();
+                    
+                    if (medicationsData.success) {
+                        document.getElementById('totalMedications').textContent = medicationsData.medications.length;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Set fallback values
+                document.getElementById('takenToday').textContent = '0';
+                document.getElementById('pendingToday').textContent = '0';
+                document.getElementById('totalMedications').textContent = '0';
+            }
+        }
+
+        async function loadRecentHistory(days = 7) {
+            showLoading();
+            
+            try {
+                const response = await API.getDoseHistory(days);
+                const data = await response.json();
+                
+                // The API returns data directly, not wrapped in a success object
+                displayRecentHistory(data.takenDoses || []);
+            } catch (error) {
+                console.error('Error loading recent history:', error);
+                displayEmptyRecentHistory();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayRecentHistory(takenDoses) {
+            const container = document.getElementById('recentHistory');
+            
+            if (takenDoses.length === 0) {
+                container.innerHTML = createEmptyHistoryState();
+                return;
+            }
+            
+            // Group doses by date
+            const groupedDoses = groupDosesByDate(takenDoses);
+            
+            let html = '';
+            Object.keys(groupedDoses).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+                const doses = groupedDoses[date];
+                const dateObj = new Date(date);
+                const isToday = dateObj.toDateString() === new Date().toDateString();
+                const isYesterday = dateObj.toDateString() === new Date(Date.now() - 86400000).toDateString();
+                
+                let dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                if (isToday) dateLabel = 'Today';
+                if (isYesterday) dateLabel = 'Yesterday';
+                
+                html += `
+                    <div class="px-6 py-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">${dateLabel}</h4>
+                        <div class="space-y-3">
+                            ${doses.map(dose => createDoseHistoryItem(dose)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function groupDosesByDate(doses) {
+            const grouped = {};
+            doses.forEach(dose => {
+                const date = new Date(dose.takenAt).toDateString();
+                if (!grouped[date]) {
+                    grouped[date] = [];
+                }
+                grouped[date].push(dose);
+            });
+            return grouped;
+        }
+
+        function createDoseHistoryItem(dose) {
+            const time = new Date(dose.takenAt).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            // Translate schedule only
+            let translatedSchedule = dose.schedule;
+            
+            if (window.i18n && typeof window.i18n.t === 'function') {
+                try {
+                    // Translate schedule using the medication instruction translator
+                    translatedSchedule = translateMedicationInstruction(dose.schedule);
+                } catch (error) {
+                    console.warn('Translation failed in dose history, using fallback:', error);
+                    // Keep original values if translation fails
+                }
+            }
+            
+            return `
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">${dose.medicationName}</p>
+                        <p class="text-xs text-gray-600" data-original-dose-info="${dose.schedule}">${translatedSchedule}</p>
+                    </div>
+                    <div class="text-xs text-gray-500">${time}</div>
+                </div>
+            `;
+        }
+
+        function displayEmptyRecentHistory() {
+            document.getElementById('recentHistory').innerHTML = createEmptyHistoryState();
+        }
+
+        function createEmptyHistoryState() {
+            return `
+                <div class="px-6 py-12 text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <p class="text-gray-500" data-i18n="history.noRecentHistory">No recent medication history</p>
+                    <p class="text-sm text-gray-400 mt-1" data-i18n="history.medicationIntakeWillAppearHere">Your medication intake will appear here</p>
+                </div>
+            `;
+        }
+
+        async function loadAllMedications() {
+            try {
+                const response = await API.getMedications();
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAllMedications(data.medications || []);
+                } else {
+                    displayEmptyMedications();
+                }
+            } catch (error) {
+                console.error('Error loading medications:', error);
+                displayEmptyMedications();
+            }
+        }
+
+        function displayAllMedications(medications) {
+            const container = document.getElementById('allMedications');
+            
+            if (medications.length === 0) {
+                container.innerHTML = createEmptyMedicationsState();
+                return;
+            }
+            
+            const html = medications.map(medication => createMedicationItem(medication)).join('');
+            container.innerHTML = html;
+        }
+
+        function createMedicationItem(medication) {
+            const createdDate = new Date(medication.created_at).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+            
+            // Translate schedule if i18n is available
+            let translatedSchedule = medication.schedule;
+            
+            if (window.i18n && typeof window.i18n.t === 'function') {
+                try {
+                    translatedSchedule = translateMedicationInstruction(medication.schedule);
+                } catch (error) {
+                    console.warn('Translation failed, using fallback:', error);
+                    // Keep original values if translation fails
+                }
+            }
+            
+            return `
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <h4 class="text-sm font-medium text-gray-900">${medication.name}</h4>
+                                    ${medication.extraction_used ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">🤖</span>' : '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">📝</span>'}
+                                </div>
+                                <p class="text-xs text-gray-600">${medication.dosage}</p>
+                                <p class="text-xs text-gray-500 mt-1" data-original-schedule="${medication.schedule}">${translatedSchedule}</p>
+                                ${medication.specific_time ? `<p class="text-xs text-gray-500" data-original-specific-time="Specific time: ${formatTime(medication.specific_time)}">${window.i18n ? window.i18n.t('history.specificTime') : 'Specific time'}: ${formatTime(medication.specific_time)}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500" data-original-added="Added ${createdDate}">${window.i18n ? window.i18n.t('history.added') : 'Added'} ${createdDate}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            const [hours, minutes] = timeString.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+
+        function displayEmptyMedications() {
+            document.getElementById('allMedications').innerHTML = createEmptyMedicationsState();
+        }
+
+        function createEmptyMedicationsState() {
+            return `
+                <div class="px-6 py-12 text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    <p class="text-gray-500" data-i18n="history.noMedicationsFound">No medications found</p>
+                    <p class="text-sm text-gray-400 mt-1" data-i18n="history.addYourFirstMedication">Add your first medication to get started</p>
+                    <button onclick="window.location.href='add-medication.html'" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <span data-i18n="history.addMedication">Add Medication</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        // Function to refresh date labels when language changes
+        function refreshDateLabels() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing date labels...');
+            
+            // Find all date labels in recent history
+            const dateLabels = document.querySelectorAll('#recentHistory h4');
+            dateLabels.forEach(label => {
+                const text = label.textContent;
+                if (text === 'Today') {
+                    label.textContent = window.i18n.t('history.today');
+                } else if (text === 'Yesterday') {
+                    label.textContent = window.i18n.t('history.yesterday');
+                }
+            });
+        }
+
+        // Function to refresh empty state messages when language changes
+        function refreshEmptyStateMessages() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing empty state messages...');
+            
+            // Refresh empty history state if visible
+            const recentHistory = document.getElementById('recentHistory');
+            if (recentHistory && recentHistory.innerHTML.includes('No recent medication history')) {
+                recentHistory.innerHTML = createEmptyHistoryState();
+            }
+            
+            // Refresh empty medications state if visible
+            const allMedications = document.getElementById('allMedications');
+            if (allMedications && allMedications.innerHTML.includes('No medications found')) {
+                allMedications.innerHTML = createEmptyMedicationsState();
+            }
+        }
+
+        // Function to refresh dynamic text when language changes
+        function refreshDynamicText() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing dynamic text...');
+            
+            // Refresh dose info text
+            const doseInfoElements = document.querySelectorAll('[data-original-dose-info]');
+            doseInfoElements.forEach(element => {
+                const originalText = element.getAttribute('data-original-dose-info');
+                if (originalText) {
+                    // Translate schedule only
+                    const translatedSchedule = translateMedicationInstruction(originalText);
+                    element.textContent = translatedSchedule;
+                }
+            });
+            
+            // Refresh schedule text
+            const scheduleElements = document.querySelectorAll('[data-original-schedule]');
+            scheduleElements.forEach(element => {
+                const originalText = element.getAttribute('data-original-schedule');
+                if (originalText) {
+                    const translatedSchedule = translateMedicationInstruction(originalText);
+                    element.textContent = translatedSchedule;
+                }
+            });
+            
+            // Refresh specific time text
+            const specificTimeElements = document.querySelectorAll('[data-original-specific-time]');
+            specificTimeElements.forEach(element => {
+                const originalText = element.getAttribute('data-original-specific-time');
+                if (originalText) {
+                    if (originalText.startsWith('Specific time:')) {
+                        const time = originalText.replace('Specific time:', '').trim();
+                        element.textContent = window.i18n.t('history.specificTime') + ': ' + time;
+                    }
+                }
+            });
+            
+            // Refresh added text
+            const addedElements = document.querySelectorAll('[data-original-added]');
+            addedElements.forEach(element => {
+                const originalText = element.getAttribute('data-original-added');
+                if (originalText) {
+                    if (originalText.startsWith('Added ')) {
+                        const date = originalText.replace('Added ', '').trim();
+                        element.textContent = window.i18n.t('history.added') + ' ' + date;
+                    }
+                }
+            });
+        }
+
+        // Function to translate medication instructions (schedule text)
+        function translateMedicationInstruction(instruction) {
+            if (!window.i18n || typeof window.i18n.t !== 'function') return instruction;
+            
+            const lowerInstruction = instruction.toLowerCase();
+            console.log('🔄 Translating medication instruction:', instruction);
+            
+            try {
+                // Common tablet patterns - English
+                if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
+                    const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
+                    if (match) {
+                        const count = parseInt(match[1]);
+                        const plural = count > 1 ? 's' : '';
+                        const frequency = match[3];
+                        
+                        // Translate the frequency part
+                        let translatedFrequency = frequency;
+                        if (frequency.includes('every day')) {
+                            translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily') || 'every day';
+                        } else if (frequency.includes('twice daily')) {
+                            translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.twiceDaily') || 'twice daily';
+                        } else if (frequency.includes('three times daily')) {
+                            translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.threeTimesDaily') || 'three times daily';
+                        }
+                        
+                        const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                            count: count, 
+                            plural: plural, 
+                            frequency: translatedFrequency 
+                        }) || instruction;
+                        console.log('✅ Translated tablet instruction:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Common tablet patterns - Chinese (reverse translation)
+                if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
+                    const match = instruction.match(/服用(\d+)片(.+)/);
+                    if (match) {
+                        const count = parseInt(match[1]);
+                        const plural = count > 1 ? 's' : '';
+                        
+                        const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                            count: count, 
+                            plural: plural, 
+                            frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily') || 'every day'
+                        }) || instruction;
+                        console.log('✅ Reverse translated tablet instruction:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Generic fallback - try to translate common words
+                let translatedInstruction = instruction;
+                
+                // Replace common English words with translations
+                if (lowerInstruction.includes('take')) {
+                    const takeTranslation = window.i18n.t('schedule.medicationInstructions.takeTablet');
+                    if (takeTranslation && takeTranslation !== 'schedule.medicationInstructions.takeTablet') {
+                        translatedInstruction = translatedInstruction.replace(/take/gi, takeTranslation.split('{')[0].trim());
+                    }
+                }
+                if (lowerInstruction.includes('tablet')) {
+                    const tabletTranslation = window.i18n.t('schedule.medicationInstructions.takeTablet');
+                    if (tabletTranslation && tabletTranslation !== 'schedule.medicationInstructions.takeTablet') {
+                        const tabletPart = tabletTranslation.split('tablet')[0].split('{')[2]?.split('}')[0] || 'tablet';
+                        translatedInstruction = translatedInstruction.replace(/tablet/gi, tabletPart);
+                    }
+                }
+                if (lowerInstruction.includes('by mouth')) {
+                    const mouthTranslation = window.i18n.t('schedule.medicationInstructions.takeTablet');
+                    if (mouthTranslation && mouthTranslation !== 'schedule.medicationInstructions.takeTablet') {
+                        const mouthPart = mouthTranslation.split('mouth')[0].split('{')[3]?.split('}')[0] || 'by mouth';
+                        translatedInstruction = translatedInstruction.replace(/by mouth/gi, mouthPart);
+                    }
+                }
+                if (lowerInstruction.includes('every day')) {
+                    const frequencyTranslation = window.i18n.t('schedule.medicationInstructions.frequency.daily');
+                    if (frequencyTranslation && frequencyTranslation !== 'schedule.medicationInstructions.frequency.daily') {
+                        translatedInstruction = translatedInstruction.replace(/every day/gi, frequencyTranslation);
+                    }
+                }
+                
+                console.log('✅ Translated medication instruction:', translatedInstruction);
+                return translatedInstruction;
+            } catch (error) {
+                console.warn('Translation failed, returning original instruction:', error);
+                return instruction;
+            }
+        }
+
+        // Make functions globally accessible for debugging
+        window.translateMedicationInstruction = translateMedicationInstruction;
+        window.refreshDynamicText = refreshDynamicText;
+        
+        // Check for language changes periodically (every 5 seconds)
+        setInterval(() => {
+            if (window.i18n) {
+                const currentLang = window.i18n.getCurrentLanguage();
+                const savedLang = localStorage.getItem('language') || 'en';
+                if (currentLang !== savedLang) {
+                    console.log('🔄 Language preference changed, refreshing content...');
+                    refreshStaticContent();
+                    refreshDynamicContent();
+                }
+            }
+        }, 5000);
+    </script>
+    
+    <!-- Auth and API Scripts -->
+    <script src="api-utils.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+</body>
+</html> 

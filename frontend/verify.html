@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="actions.verifyMedication">Medication Verification - MediHelper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='index.html'" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-900" data-i18n="actions.verifyMedication">Medication Verification</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Status Indicator -->
+        <div class="text-center mb-8">
+            <div id="statusIndicator" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium">
+                <!-- Status will be set by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Medication Selection -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="actions.selectMedicationToVerify">Select Medication to Verify</h3>
+            <div id="medicationList" class="space-y-3">
+                <!-- Medications will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Verification Section -->
+        <div id="verificationSection" class="hidden">
+            <!-- Selected Medication Info -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h4 id="selectedMedName" class="text-xl font-semibold text-gray-900">Vitamin D</h4>
+                        <p id="selectedMedDosage" class="text-gray-600">1000 IU</p>
+                        <p id="selectedMedSchedule" class="text-sm text-gray-500">Once daily</p>
+                    </div>
+                    <button onclick="backToSelection()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Photo Verification -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="actions.takePhotoOfPill">Take Photo of Pill</h3>
+                <p class="text-sm text-gray-600 mb-4" data-i18n="actions.takePhotoOfPillDesc">Take a photo of the pill to verify you're taking the correct medication</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Camera/Upload Area -->
+                    <div class="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-6 text-center">
+                        <div id="cameraPreview" class="w-full h-48 flex flex-col items-center justify-center">
+                            <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-gray-600 font-medium" data-i18n="actions.takePhotoOfPillBtn">Take photo of pill</p>
+                            <p class="text-sm text-gray-500 mt-2" data-i18n="actions.clickToCaptureOrUpload">Click to capture or upload</p>
+                        </div>
+                        <img id="capturedImage" class="w-full h-48 object-cover rounded-lg hidden" alt="Captured pill">
+                        
+                        <div class="mt-4 space-x-2">
+                            <button id="captureBtn" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span data-i18n="actions.takePhotoOfPillBtn">Take Photo</span>
+                            </button>
+                            <button id="retakeBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors hidden">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span data-i18n="actions.retake">Retake</span>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <label for="fileInput" class="cursor-pointer text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                <span data-i18n="actions.orUploadFromGallery">Or upload from gallery</span>
+                            </label>
+                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Verification Status -->
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h4 class="font-semibold text-gray-900 mb-4" data-i18n="actions.verificationStatus">Verification Status</h4>
+                        <div id="verificationStatus" class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600" data-i18n="actions.photoCaptured">Photo captured</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600" data-i18n="actions.pillVerification">Pill verification</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600" data-i18n="actions.doseRecorded">Dose recorded</span>
+                            </div>
+                        </div>
+                        
+                        <button id="verifyBtn" class="w-full mt-6 bg-primary-600 hover:bg-primary-700 text-white py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <span data-i18n="actions.verifyMedicationTaken">Verify Medication Taken</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Actions -->
+        <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="actions.quickActions">Quick Actions</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button onclick="window.location.href='schedule.html'" class="flex items-center justify-center space-x-3 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span data-i18n="actions.viewSchedule">View Schedule</span>
+                </button>
+                <button onclick="window.location.href='history.html'" class="flex items-center justify-center space-x-3 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span data-i18n="actions.viewHistory">View History</span>
+                </button>
+                <button onclick="window.location.href='add-medication.html'" class="flex items-center justify-center space-x-3 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span data-i18n="actions.addMedication">Add Medication</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2" data-i18n="actions.medicationTaken">Medication Taken!</h3>
+                <p class="text-gray-600 mb-6" data-i18n="actions.medicationRecordedSuccessfully">Your medication has been recorded successfully.</p>
+                <div class="flex space-x-4">
+                    <button onclick="closeSuccessModal()" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                        <span data-i18n="actions.continue">Continue</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p class="text-gray-700" data-i18n="actions.verifyingMedication">Verifying medication...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='index.html'">
+                    <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.home">Home</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='schedule.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.schedule">Schedule</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-primary-600">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-xs font-medium" data-i18n="navigation.verify">Verify</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='add-medication.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.add">Add</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='history.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="text-xs" data-i18n="navigation.history">History</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Add bottom padding to account for fixed navigation -->
+    <div class="h-20"></div>
+
+    <script>
+        let selectedMedication = null;
+        let capturedImageFile = null;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Listen for language changes and refresh content
+            if (window.i18n) {
+                window.addEventListener('languageChanged', function() {
+                    console.log('🔄 Language changed on verify page, refreshing content...');
+                    
+                    // Refresh static HTML content with data-i18n attributes
+                    if (window.i18n && typeof window.i18n.updatePage === 'function') {
+                        window.i18n.updatePage();
+                    } else {
+                        // Manual fallback: refresh static content
+                        refreshStaticContent();
+                    }
+                    
+                    // Refresh any dynamic content that might need translation updates
+                    // Only call updateVerificationStatus if it exists and the verification section is visible
+                    if (typeof updateVerificationStatus === 'function') {
+                        const verificationSection = document.getElementById('verificationSection');
+                        if (verificationSection && !verificationSection.classList.contains('hidden')) {
+                            try {
+                                updateVerificationStatus();
+                            } catch (error) {
+                                console.log('⚠️ updateVerificationStatus failed:', error.message);
+                            }
+                        }
+                    }
+                    
+                    // If there's an eligibility warning showing, refresh it
+                    const medicationList = document.getElementById('medicationList');
+                    if (medicationList && (medicationList.innerHTML.includes('Cannot verify') || medicationList.innerHTML.includes('此时无法验证'))) {
+                        console.log('🔄 Refreshing eligibility warning with new language...');
+                        // Use the direct refresh function instead of re-triggering the API call
+                        refreshEligibilityWarning();
+                    } else {
+                        console.log('ℹ️ No eligibility warning found to refresh');
+                    }
+                    
+                    // Refresh medication instructions in the medication list
+                    refreshMedicationInstructions();
+                });
+                
+                // Also check if language has changed since page load and refresh if needed
+                const currentLang = window.i18n.getCurrentLanguage();
+                const savedLang = localStorage.getItem('language') || 'en';
+                if (currentLang !== savedLang) {
+                    console.log('🔄 Language preference changed, refreshing content...');
+                    setTimeout(() => {
+                        // Refresh static content
+                        if (typeof refreshStaticContent === 'function') {
+                            refreshStaticContent();
+                        }
+                        // Refresh dynamic content
+                        if (typeof refreshEligibilityWarning === 'function') {
+                            refreshEligibilityWarning();
+                        }
+                        if (typeof refreshMedicationInstructions === 'function') {
+                            refreshMedicationInstructions();
+                        }
+                    }, 100);
+                }
+            }
+            
+            console.log('🚀 Verification page loaded, checking authentication...');
+            console.log('🔍 Current authManager state:', {
+                exists: !!window.authManager,
+                currentUser: window.authManager?.currentUser,
+                isAuthenticated: window.authManager?.isAuthenticated?.()
+            });
+            
+            // Check if user is already authenticated
+            if (window.authManager && window.authManager.isAuthenticated && window.authManager.isAuthenticated()) {
+                console.log('✅ User already authenticated, loading medications immediately...');
+                loadMedications();
+                setupEventListeners();
+                return;
+            }
+            
+            // Show initial loading state
+            showLoading();
+            
+            // Wait for authentication to be ready
+            let authCheckAttempts = 0;
+            const maxAuthAttempts = 50; // 5 seconds max wait
+            
+            const checkAuth = () => {
+                authCheckAttempts++;
+                
+                if (window.authManager) {
+                    if (window.authManager.currentUser !== undefined) {
+                        console.log('✅ Authentication ready, loading medications...');
+                        hideLoading();
+                        loadMedications();
+                        setupEventListeners();
+                        
+                        // Test that functions are accessible
+                        console.log('Function availability check:', {
+                            backToSelection: typeof window.backToSelection,
+                            showVerificationSection: typeof window.showVerificationSection,
+                            selectMedication: typeof window.selectMedication
+                        });
+                        return;
+                    } else if (window.authManager.isAuthenticated && window.authManager.isAuthenticated()) {
+                        console.log('✅ User is authenticated, loading medications...');
+                        hideLoading();
+                        loadMedications();
+                        setupEventListeners();
+                        return;
+                    }
+                }
+                
+                if (authCheckAttempts >= maxAuthAttempts) {
+                    console.error('❌ Authentication timeout, showing error');
+                    hideLoading();
+                    showErrorState('Authentication timeout. Please refresh the page.');
+                    return;
+                }
+                
+                console.log(`⏳ Waiting for authentication... (attempt ${authCheckAttempts}/${maxAuthAttempts})`);
+                setTimeout(checkAuth, 100);
+            };
+            
+            checkAuth();
+            
+            // Check for language changes periodically (every 5 seconds)
+            setInterval(() => {
+                if (window.i18n) {
+                    const currentLang = window.i18n.getCurrentLanguage();
+                    const savedLang = localStorage.getItem('language') || 'en';
+                    if (currentLang !== savedLang) {
+                        console.log('🔄 Language preference changed, refreshing content...');
+                        // Refresh static content
+                        if (typeof refreshStaticContent === 'function') {
+                            refreshStaticContent();
+                        }
+                        // Refresh dynamic content
+                        if (typeof refreshEligibilityWarning === 'function') {
+                            refreshEligibilityWarning();
+                        }
+                        if (typeof refreshMedicationInstructions === 'function') {
+                            refreshMedicationInstructions();
+                        }
+                    }
+                }
+            }, 5000);
+        });
+
+        function setupEventListeners() {
+            // Photo capture
+            document.getElementById('captureBtn').addEventListener('click', () => {
+                document.getElementById('fileInput').click();
+            });
+            
+            document.getElementById('retakeBtn').addEventListener('click', retakePhoto);
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            document.getElementById('verifyBtn').addEventListener('click', verifyMedicationTaken);
+        }
+
+        async function loadMedications() {
+            showLoading();
+            
+            try {
+                console.log('🔍 Loading medications...');
+                
+                // Check if user is authenticated first
+                if (!window.authManager || !window.authManager.isAuthenticated()) {
+                    console.log('❌ User not authenticated');
+                    showAuthenticationError();
+                    return;
+                }
+                
+                const response = await API.getMedications();
+                console.log('📡 API response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📊 API response data:', data);
+                
+                // Check if response indicates authentication failure
+                if (response.status === 401 || !data.success && data.message && data.message.includes('Authentication')) {
+                    console.error('❌ Authentication required for medication access');
+                    showAuthenticationError();
+                    return;
+                }
+                
+                if (data.success && data.medications && data.medications.length > 0) {
+                    console.log(`✅ Loaded ${data.medications.length} medications`);
+                    displayMedicationList(data.medications);
+                } else {
+                    console.log('ℹ️ No medications found or empty response');
+                    showNoMedicationsState();
+                }
+            } catch (error) {
+                console.error('❌ Error loading medications:', error);
+                console.error('❌ Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Check if it's an authentication error
+                if (error.message && error.message.includes('Authentication')) {
+                    showAuthenticationError();
+                } else {
+                    showErrorState('Failed to load medications. Please try refreshing the page.');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayMedicationList(medications) {
+            const container = document.getElementById('medicationList');
+            
+            const html = medications.map(medication => `
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer" onclick="selectMedication(${medication.id})">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${medication.name}</h4>
+                            <p class="text-sm text-gray-600">${medication.dosage}</p>
+                            <p class="text-xs text-gray-500" data-original-instruction="${medication.schedule}">${translateMedicationInstruction(medication.schedule)}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        async function selectMedication(medicationId) {
+            try {
+                console.log('🔍 Selecting medication:', medicationId);
+                
+                // Check authentication first
+                if (!window.authManager || !window.authManager.isAuthenticated()) {
+                    console.log('❌ User not authenticated');
+                    showAuthenticationError();
+                    return;
+                }
+                
+                // First check if medication is eligible for verification
+                console.log('🔍 Checking medication eligibility...');
+                const eligibilityResponse = await API.checkMedicationEligibility(medicationId);
+                console.log('📡 Eligibility response status:', eligibilityResponse.status);
+                console.log('📡 Eligibility response headers:', eligibilityResponse.headers);
+                
+                // Check if response is JSON before trying to parse
+                const contentType = eligibilityResponse.headers.get('content-type');
+                console.log('📡 Response content-type:', contentType);
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('❌ Response is not JSON, getting text content...');
+                    const textContent = await eligibilityResponse.text();
+                    console.error('❌ Response text (first 500 chars):', textContent.substring(0, 500));
+                    throw new Error(`API returned non-JSON response: ${contentType || 'unknown'}`);
+                }
+                
+                const eligibilityData = await eligibilityResponse.json();
+                console.log('📊 Eligibility data:', eligibilityData);
+                
+                if (!eligibilityData.success) {
+                    console.error('❌ Eligibility check failed:', eligibilityData.message);
+                    showError(`Failed to check eligibility: ${eligibilityData.message}`);
+                    return;
+                }
+
+                // Get medication details
+                console.log('🔍 Loading medication details...');
+                const response = await API.getMedications();
+                console.log('📡 Medications response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📊 Medications data:', data);
+                
+                if (data.success) {
+                    // Convert medicationId to number for comparison since it might be passed as string from HTML
+                    const numericMedicationId = parseInt(medicationId);
+                    console.log('🔍 Looking for medication with ID:', numericMedicationId);
+                    
+                    selectedMedication = data.medications.find(med => med.id === numericMedicationId);
+                    console.log('📋 Selected medication:', selectedMedication);
+                    
+                    if (selectedMedication) {
+                        if (eligibilityData.eligible) {
+                            console.log('✅ Medication eligible, showing verification section');
+                            showVerificationSection();
+                        } else {
+                            console.log('⚠️ Medication not eligible, showing warning');
+                            showEligibilityWarning(eligibilityData);
+                        }
+                    } else {
+                        console.error('❌ Medication not found in list');
+                        showError('Selected medication not found in the list. Please try refreshing the page.');
+                    }
+                } else {
+                    console.error('❌ Failed to load medications:', data.message);
+                    showError('Failed to load medication details');
+                }
+            } catch (error) {
+                console.error('❌ Error selecting medication:', error);
+                console.error('❌ Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Check if it's an authentication error
+                if (error.message && error.message.includes('Authentication')) {
+                    showAuthenticationError();
+                } else {
+                    showError('Failed to load medication details');
+                }
+            }
+        }
+
+        function showEligibilityWarning(eligibilityData) {
+            const container = document.getElementById('medicationList');
+            
+            // Get translations with fallbacks
+            const getText = (key, params = {}) => {
+                if (window.i18n) {
+                    return window.i18n.t(key, params);
+                }
+                // Fallback to English
+                const fallbacks = {
+                    'actions.cannotVerifyAtThisTime': `Cannot verify ${eligibilityData.medication.name} at this time`,
+                    'actions.time': 'Time:',
+                    'actions.frequency': 'Frequency:',
+                    'actions.recentDose': 'Recent Dose:',
+                    'actions.chooseDifferentMedication': 'Choose Different Medication',
+                    'actions.verifyAnyway': 'Verify Anyway (Override)'
+                };
+                return fallbacks[key] || key;
+            };
+            
+            // Function to translate dynamic messages from backend
+            const translateMessage = (message) => {
+                if (!window.i18n) return message;
+                
+                const lowerMessage = message.toLowerCase();
+                console.log('🔄 Translating message:', message);
+                
+                // Time message patterns - English
+                if (lowerMessage.includes('should be taken at') && lowerMessage.includes('±2 hours')) {
+                    const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
+                    if (timeMatch) {
+                        const translated = window.i18n.t('actions.shouldBeTakenAt', { time: timeMatch[1] });
+                        console.log('✅ Translated time message:', translated);
+                        return translated;
+                    }
+                }
+                
+                if (lowerMessage.includes('can be taken at') && lowerMessage.includes('±2 hours')) {
+                    const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
+                    if (timeMatch) {
+                        const translated = window.i18n.t('actions.canBeTakenAt', { time: timeMatch[1] });
+                        console.log('✅ Translated time message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Time message patterns - Chinese (reverse translation)
+                if (lowerMessage.includes('可在') && lowerMessage.includes('±2小时') && lowerMessage.includes('服用')) {
+                    const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
+                    if (timeMatch) {
+                        const translated = window.i18n.t('actions.canBeTakenAt', { time: timeMatch[1] });
+                        console.log('✅ Reverse translated time message:', translated);
+                        return translated;
+                    }
+                }
+                
+                if (lowerMessage.includes('应在') && lowerMessage.includes('±2小时') && lowerMessage.includes('服用')) {
+                    const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
+                    if (timeMatch) {
+                        const translated = window.i18n.t('actions.shouldBeTakenAt', { time: timeMatch[1] });
+                        console.log('✅ Reverse translated time message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Frequency message patterns - English
+                if (lowerMessage.includes('can take dose') && lowerMessage.includes('of') && lowerMessage.includes('today')) {
+                    const match = message.match(/can take dose (\d+) of (\d+) today/i);
+                    if (match) {
+                        const translated = window.i18n.t('actions.canTakeDose', { taken: match[1], total: match[2] });
+                        console.log('✅ Translated frequency message:', translated);
+                        return translated;
+                    }
+                }
+                
+                if (lowerMessage.includes('already taken') && lowerMessage.includes('of') && lowerMessage.includes('doses today')) {
+                    const match = message.match(/already taken (\d+) of (\d+) doses today/i);
+                    if (match) {
+                        const translated = window.i18n.t('actions.alreadyTaken', { taken: match[1], total: match[2] });
+                        console.log('✅ Translated frequency message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Frequency message patterns - Chinese (reverse translation)
+                if (lowerMessage.includes('今天可以服用第') && lowerMessage.includes('剂')) {
+                    const match = message.match(/(\d+)\/(\d+)/);
+                    if (match) {
+                        const translated = window.i18n.t('actions.canTakeDose', { taken: match[1], total: match[2] });
+                        console.log('✅ Reverse translated frequency message:', translated);
+                        return translated;
+                    }
+                }
+                
+                if (lowerMessage.includes('今天已服用') && lowerMessage.includes('剂')) {
+                    const match = message.match(/(\d+)\/(\d+)/);
+                    if (match) {
+                        const translated = window.i18n.t('actions.alreadyTaken', { taken: match[1], total: match[2] });
+                        console.log('✅ Reverse translated frequency message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Recent dose message patterns - English
+                if (lowerMessage.includes('last dose was') && lowerMessage.includes('minutes ago')) {
+                    const match = message.match(/last dose was (\d+) minutes ago/i);
+                    if (match) {
+                        const translated = window.i18n.t('actions.lastDoseWas', { minutes: match[1] });
+                        console.log('✅ Translated recent dose message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // Recent dose message patterns - Chinese (reverse translation)
+                if (lowerMessage.includes('上次剂量是') && lowerMessage.includes('分钟前')) {
+                    const match = message.match(/(\d+)/);
+                    if (match) {
+                        const translated = window.i18n.t('actions.lastDoseWas', { minutes: match[1] });
+                        console.log('✅ Reverse translated recent dose message:', translated);
+                        return translated;
+                    }
+                }
+                
+                // No previous doses pattern - English
+                if (lowerMessage.includes('no previous doses today')) {
+                    const translated = window.i18n.t('actions.noPreviousDosesToday');
+                    console.log('✅ Translated no previous doses message:', translated);
+                    return translated;
+                }
+                
+                // No previous doses pattern - Chinese (reverse translation)
+                if (lowerMessage.includes('今天没有之前的剂量')) {
+                    const translated = window.i18n.t('actions.noPreviousDosesToday');
+                    console.log('✅ Reverse translated no previous doses message:', translated);
+                    return translated;
+                }
+                
+                            console.log('⚠️ No translation pattern found for:', message);
+            return message;
+        };
+            
+            const warningHtml = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-red-800 mb-2">
+                                ${getText('actions.cannotVerifyAtThisTime', { medication: eligibilityData.medication.name })}
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-sm font-medium text-red-700">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        ${getText('actions.time')}
+                                    </span>
+                                    <span class="text-sm text-red-600">${translateMessage(eligibilityData.timeCheck.message)}</span>
+                                </div>
+                                
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-sm font-medium text-red-700">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                        ${getText('actions.frequency')}
+                                    </span>
+                                    <span class="text-sm text-red-600">${translateMessage(eligibilityData.frequencyCheck.message)}</span>
+                                </div>
+                                
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-sm font-medium text-red-700">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        ${getText('actions.recentDose')}
+                                    </span>
+                                    <span class="text-sm text-red-600">${translateMessage(eligibilityData.recentDoseCheck.message)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex space-x-3">
+                                <button onclick="backToSelection()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                                    ${getText('actions.chooseDifferentMedication')}
+                                </button>
+                                <button onclick="showVerificationSection()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                    ${getText('actions.verifyAnyway')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Hide the medication list and show warning
+            container.innerHTML = warningHtml;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('medicationList');
+            container.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <span class="text-red-800">${message}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showVerificationSection() {
+
+            
+            // Update selected medication info
+            document.getElementById('selectedMedName').textContent = selectedMedication.name;
+            document.getElementById('selectedMedDosage').textContent = selectedMedication.dosage;
+            document.getElementById('selectedMedSchedule').textContent = translateMedicationInstruction(selectedMedication.schedule);
+            
+            // Show verification section, hide medication list
+            document.getElementById('verificationSection').classList.remove('hidden');
+            
+            // Hide the medication list container (whether it's the original list or warning)
+            const medicationListContainer = document.getElementById('medicationList');
+            if (medicationListContainer) {
+                medicationListContainer.style.display = 'none';
+            }
+            
+            // Reset photo state
+            resetPhotoState();
+        }
+
+        function backToSelection() {
+
+            
+            // Hide verification section
+            document.getElementById('verificationSection').classList.add('hidden');
+            
+            // Show the medication list container
+            const medicationListContainer = document.getElementById('medicationList');
+            if (medicationListContainer) {
+                medicationListContainer.style.display = 'block';
+            }
+            
+            // Reload the medication list
+            loadMedications();
+            
+            // Reset state
+            selectedMedication = null;
+            capturedImageFile = null;
+        }
+
+        // Function to translate medication instructions (schedule text)
+        function translateMedicationInstruction(instruction) {
+            if (!window.i18n) return instruction;
+            
+            const lowerInstruction = instruction.toLowerCase();
+            console.log('🔄 Translating medication instruction:', instruction);
+            
+            // Common tablet patterns - English
+            if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
+                const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const plural = count > 1 ? 's' : '';
+                    const frequency = match[3];
+                    
+                    // Translate the frequency part
+                    let translatedFrequency = frequency;
+                    if (frequency.includes('every day')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily');
+                    } else if (frequency.includes('twice daily')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.twiceDaily');
+                    } else if (frequency.includes('three times daily')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.threeTimesDaily');
+                    }
+                    
+                    const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                        count: count, 
+                        plural: plural, 
+                        frequency: translatedFrequency 
+                    });
+                    console.log('✅ Translated tablet instruction:', translated);
+                    return translated;
+                }
+            }
+            
+            // Common tablet patterns - Chinese (reverse translation)
+            if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
+                const match = instruction.match(/服用(\d+)片(.+)/);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const plural = count > 1 ? 's' : '';
+                    
+                    const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                        count: count, 
+                        plural: plural, 
+                        frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily')
+                    });
+                    console.log('✅ Reverse translated tablet instruction:', translated);
+                    return translated;
+                }
+            }
+            
+            // Generic fallback - try to translate common words
+            let translatedInstruction = instruction;
+            
+            // Replace common English words with translations
+            if (lowerInstruction.includes('take')) {
+                translatedInstruction = translatedInstruction.replace(/take/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('{')[0].trim());
+            }
+            if (lowerInstruction.includes('tablet')) {
+                translatedInstruction = translatedInstruction.replace(/tablet/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('tablet')[0].split('{')[2]?.split('}')[0] || 'tablet');
+            }
+            if (lowerInstruction.includes('by mouth')) {
+                translatedInstruction = translatedInstruction.replace(/by mouth/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('mouth')[0].split('{')[3]?.split('}')[0] || 'by mouth');
+            }
+            if (lowerInstruction.includes('every day')) {
+                translatedInstruction = translatedInstruction.replace(/every day/gi, window.i18n.t('schedule.medicationInstructions.frequency.daily'));
+            }
+            
+            console.log('✅ Translated medication instruction:', translatedInstruction);
+            return translatedInstruction;
+        }
+
+        // Make functions globally accessible
+        window.backToSelection = backToSelection;
+        window.showVerificationSection = showVerificationSection;
+        window.selectMedication = selectMedication;
+        window.translateMedicationInstruction = translateMedicationInstruction;
+        window.refreshMedicationInstructions = refreshMedicationInstructions;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                capturedImageFile = file;
+                displayImage(file);
+                updateVerificationStatus(0, true); // Photo captured
+                enableVerifyButton();
+            }
+        }
+
+        function displayImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('capturedImage').src = e.target.result;
+                document.getElementById('capturedImage').classList.remove('hidden');
+                document.getElementById('cameraPreview').classList.add('hidden');
+                document.getElementById('retakeBtn').classList.remove('hidden');
+                document.getElementById('captureBtn').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function retakePhoto() {
+            resetPhotoState();
+        }
+
+        function resetPhotoState() {
+            document.getElementById('capturedImage').classList.add('hidden');
+            document.getElementById('cameraPreview').classList.remove('hidden');
+            document.getElementById('retakeBtn').classList.add('hidden');
+            document.getElementById('captureBtn').classList.remove('hidden');
+            document.getElementById('fileInput').value = '';
+            capturedImageFile = null;
+            updateVerificationStatus(0, false);
+            disableVerifyButton();
+        }
+
+        function updateVerificationStatus(step, completed) {
+            // Check if verification status elements exist
+            const statusItems = document.querySelectorAll('#verificationStatus > div');
+            if (!statusItems || statusItems.length === 0) {
+                console.log('⚠️ Verification status elements not found, skipping update');
+                return;
+            }
+            
+            // Check if the step index is valid
+            if (step < 0 || step >= statusItems.length) {
+                console.log(`⚠️ Invalid step index: ${step}, max: ${statusItems.length - 1}`);
+                return;
+            }
+            
+            try {
+                const currentStep = statusItems[step];
+                const icons = currentStep.querySelectorAll('svg');
+                const text = currentStep.querySelector('span');
+                
+                if (!currentStep || !icons || !text) {
+                    console.log('⚠️ Required elements not found in verification step');
+                    return;
+                }
+                
+                if (completed) {
+                    const circle = currentStep.querySelector('.w-6.h-6');
+                    if (circle) circle.className = 'w-6 h-6 bg-green-100 rounded-full flex items-center justify-center';
+                    if (icons[0]) icons[0].className = 'w-4 h-4 text-green-600';
+                    text.className = 'text-sm text-green-600';
+                } else {
+                    const circle = currentStep.querySelector('.w-6.h-6');
+                    if (circle) circle.className = 'w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center';
+                    if (icons[0]) icons[0].className = 'w-4 h-4 text-gray-400';
+                    text.className = 'text-sm text-gray-600';
+                }
+            } catch (error) {
+                console.log('⚠️ Error updating verification status:', error.message);
+            }
+        }
+
+        function enableVerifyButton() {
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = false;
+            verifyBtn.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        }
+
+        function disableVerifyButton() {
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        }
+
+        function showNoMedicationsState() {
+            const getText = (key) => {
+                if (window.i18n) {
+                    return window.i18n.t(key);
+                }
+                // Fallback to English
+                const fallbacks = {
+                    'actions.noMedicationsFound': 'No medications found',
+                    'actions.addYourFirstMedication': 'Add your first medication to get started',
+                    'actions.addMedication': 'Add Medication'
+                };
+                return fallbacks[key] || key;
+            };
+            
+            document.getElementById('medicationList').innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    <p class="text-gray-500">${getText('actions.noMedicationsFound')}</p>
+                    <p class="text-sm text-gray-400 mt-1">${getText('actions.addYourFirstMedication')}</p>
+                    <button onclick="window.location.href='add-medication.html'" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        ${getText('actions.addMedication')}
+                    </button>
+                </div>
+            `;
+        }
+
+        function showAuthenticationError() {
+            const getText = (key) => {
+                if (window.i18n) {
+                    return window.i18n.t(key);
+                }
+                // Fallback to English
+                const fallbacks = {
+                    'actions.authenticationRequired': 'Authentication Required',
+                    'actions.needToSignIn': 'You need to sign in to verify medications',
+                    'actions.goToHomePage': 'Go to Home Page'
+                };
+                return fallbacks[key] || key;
+            };
+            
+            document.getElementById('medicationList').innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <p class="text-red-600 font-medium">${getText('actions.authenticationRequired')}</p>
+                    <p class="text-sm text-gray-500 mt-1">${getText('actions.needToSignIn')}</p>
+                    <button onclick="window.location.href='index.html'" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        ${getText('actions.goToHomePage')}
+                    </button>
+                </div>
+            `;
+        }
+
+        function showErrorState(message) {
+            const getText = (key) => {
+                if (window.i18n) {
+                    return window.i18n.t(key);
+                }
+                // Fallback to English
+                const fallbacks = {
+                    'actions.errorLoadingMedications': 'Error Loading Medications',
+                    'actions.tryAgain': 'Try Again'
+                };
+                return fallbacks[key] || key;
+            };
+            
+            document.getElementById('medicationList').innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <p class="text-red-600 font-medium">${getText('actions.errorLoadingMedications')}</p>
+                    <p class="text-sm text-gray-500 mt-1">${message}</p>
+                    <button onclick="loadMedications()" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        ${getText('actions.tryAgain')}
+                    </button>
+                </div>
+            `;
+        }
+
+        // Function to refresh static content with data-i18n attributes
+        function refreshStaticContent() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing static content...');
+            
+            // Get all elements with data-i18n attributes
+            const elements = document.querySelectorAll('[data-i18n]');
+            
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (key) {
+                    const translatedText = window.i18n.t(key);
+                    if (translatedText && translatedText !== key) {
+                        element.textContent = translatedText;
+                    }
+                }
+            });
+            
+            console.log(`✅ Refreshed ${elements.length} static elements`);
+        }
+
+        // Function to refresh eligibility warning content
+        function refreshEligibilityWarning() {
+            if (!window.i18n || !selectedMedication) return;
+            
+            console.log('🔄 Refreshing eligibility warning content...');
+            
+            // Get the current eligibility data from the DOM
+            const medicationList = document.getElementById('medicationList');
+            if (!medicationList) return;
+            
+            // Check if there's an eligibility warning showing
+            if (medicationList.innerHTML.includes('Cannot verify') || medicationList.innerHTML.includes('此时无法验证')) {
+                // Find all the red text spans that contain the actual messages
+                const redTextSpans = medicationList.querySelectorAll('.text-red-600');
+                console.log('🔍 Found red text spans:', redTextSpans.length);
+                
+                let timeMessage = '';
+                let frequencyMessage = '';
+                let recentDoseMessage = '';
+                
+                // Extract messages from the spans
+                redTextSpans.forEach((span, index) => {
+                    const text = span.textContent.trim();
+                    console.log(`📝 Span ${index}: "${text}"`);
+                    
+                    // Skip empty spans and find the first non-empty span for each message type
+                    if (text) {
+                        if (!timeMessage) {
+                            timeMessage = text;
+                            console.log(`⏰ Set time message: "${text}"`);
+                        } else if (!frequencyMessage) {
+                            frequencyMessage = text;
+                            console.log(`📊 Set frequency message: "${text}"`);
+                        } else if (!recentDoseMessage) {
+                            recentDoseMessage = text;
+                            console.log(`💊 Set recent dose message: "${text}"`);
+                        }
+                    }
+                });
+                
+                console.log('📋 Extracted messages:', {
+                    time: timeMessage,
+                    frequency: frequencyMessage,
+                    recentDose: recentDoseMessage
+                });
+                
+                // Only proceed if we have at least some meaningful content
+                if (timeMessage || frequencyMessage || recentDoseMessage) {
+                    // Create mock eligibility data to regenerate the warning
+                    const mockEligibilityData = {
+                        medication: selectedMedication,
+                        timeCheck: { message: timeMessage || 'No time information available' },
+                        frequencyCheck: { message: frequencyMessage || 'No frequency information available' },
+                        recentDoseCheck: { message: recentDoseMessage || 'No recent dose information available' }
+                    };
+                    
+                    // Regenerate the warning with new language
+                    showEligibilityWarning(mockEligibilityData);
+                    console.log('✅ Eligibility warning refreshed with new language');
+                } else {
+                    console.log('⚠️ No message content found, cannot refresh warning');
+                }
+            }
+        }
+
+        // Function to refresh medication instructions when language changes
+        function refreshMedicationInstructions() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing medication instructions...');
+            
+            // Refresh instructions in the medication list
+            const medicationList = document.getElementById('medicationList');
+            if (medicationList) {
+                // Find all medication instruction paragraphs
+                const instructionElements = medicationList.querySelectorAll('p.text-xs.text-gray-500');
+                console.log(`🔍 Found ${instructionElements.length} instruction elements to refresh`);
+                
+                instructionElements.forEach((element, index) => {
+                    const originalText = element.getAttribute('data-original-instruction');
+                    if (originalText) {
+                        const translatedInstruction = translateMedicationInstruction(originalText);
+                        element.textContent = translatedInstruction;
+                        console.log(`✅ Refreshed instruction ${index}: "${translatedInstruction}"`);
+                    }
+                });
+            }
+            
+            // Refresh instruction in the verification section if visible
+            const selectedMedSchedule = document.getElementById('selectedMedSchedule');
+            if (selectedMedSchedule && selectedMedication) {
+                const translatedInstruction = translateMedicationInstruction(selectedMedication.schedule);
+                selectedMedSchedule.textContent = translatedInstruction;
+                console.log('✅ Refreshed selected medication instruction:', translatedInstruction);
+            }
+        }
+
+        async function verifyMedicationTaken() {
+            if (!selectedMedication || !capturedImageFile) return;
+            
+            showLoading();
+            
+            try {
+                console.log('🔍 Recording dose for medication:', selectedMedication);
+                console.log('📸 Image file:', capturedImageFile);
+                
+                // Upload photo and record dose with Gemini fallback
+                const formData = new FormData();
+                formData.append('photo', capturedImageFile);
+                formData.append('medicationId', selectedMedication.id);
+                // Use local date to avoid timezone issues
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+                formData.append('date', dateString);
+                formData.append('timeSlot', 'manual');
+                formData.append('taken', 'true');
+                
+                console.log('📤 Sending dose data:', {
+                    medicationId: selectedMedication.id,
+                    date: dateString,
+                    timeSlot: 'manual',
+                    taken: 'true'
+                });
+                
+                const response = await fetch(`${window.API_BASE}/record-dose-with-photo`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                console.log('📡 Dose recording response status:', response.status);
+                console.log('📡 Dose recording response headers:', response.headers);
+                
+                const result = await response.json();
+                console.log('📊 Dose recording result:', result);
+                
+                if (result.success) {
+                    updateVerificationStatus(1, true); // Photo uploaded
+                    
+                    // Show verification result
+                    const verification = result.verification;
+                    if (verification) {
+                        if (verification.isCorrectPill) {
+                            updateVerificationStatus(1, true); // Pill verified
+                            updateVerificationStatus(2, true); // Dose recorded
+                            
+                            // Show success with verification details
+                            showSuccessModalWithVerification(verification);
+                        } else {
+                            // Show warning but still record dose
+                            updateVerificationStatus(2, true); // Dose recorded
+                            showWarningModal(verification);
+                        }
+                    } else {
+                        updateVerificationStatus(2, true); // Dose recorded
+                        showSuccessModal();
+                    }
+                    
+                    setTimeout(() => {
+                        // Add a note about checking the schedule
+                        const successElement = document.querySelector('.bg-green-50');
+                        if (successElement) {
+                            const noteElement = document.createElement('div');
+                            noteElement.className = 'mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg';
+                            noteElement.innerHTML = `
+                                <p class="text-sm text-blue-800">
+                                    <span class="font-medium">💡 Tip:</span> 
+                                    Your dose has been logged! Visit the Schedule tab and click "Show Taken" to see completed doses.
+                                </p>
+                            `;
+                            successElement.appendChild(noteElement);
+                        }
+                        
+                        setTimeout(() => {
+                            backToSelection();
+                        }, 2000);
+                    }, 1000);
+                } else {
+                    throw new Error('Failed to record dose: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showSuccessModalWithVerification(verification) {
+            const modal = document.getElementById('successModal');
+            const title = modal.querySelector('h3');
+            const message = modal.querySelector('p');
+            
+            title.textContent = 'Medication Verified!';
+            message.innerHTML = `
+                Your medication has been verified and recorded successfully.<br><br>
+                <strong>Verification Details:</strong><br>
+                • Confidence: ${verification.confidence}<br>
+                • ${verification.reason}<br>
+                • ${verification.description}
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function showWarningModal(verification) {
+            const modal = document.getElementById('successModal');
+            const icon = modal.querySelector('.w-16.h-16');
+            const title = modal.querySelector('h3');
+            const message = modal.querySelector('p');
+            
+            // Change to warning style
+            icon.className = 'w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4';
+            icon.innerHTML = `
+                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            `;
+            
+            title.textContent = 'Dose Recorded with Warning';
+            title.className = 'text-xl font-semibold text-gray-900 mb-2';
+            
+            // Handle different warning scenarios
+            let warningMessage = '';
+            if (verification.reason && verification.reason.includes('AI verification unavailable')) {
+                warningMessage = `
+                    Your dose has been recorded successfully!<br><br>
+                    <strong>Note:</strong> AI verification was temporarily unavailable, so we used a fallback method.<br><br>
+                    <em>Your medication has been logged with photo evidence.</em>
+                `;
+            } else if (verification.reason && verification.reason.includes('No pill visible')) {
+                warningMessage = `
+                    Your dose has been recorded, but we couldn't detect a pill in the image.<br><br>
+                    <strong>Verification Details:</strong><br>
+                    • Confidence: ${verification.confidence}<br>
+                    • ${verification.reason}<br>
+                    • ${verification.description}<br><br>
+                    <em>Please double-check that you're taking the correct medication.</em>
+                `;
+            } else {
+                warningMessage = `
+                    Your dose has been recorded, but there was a verification issue.<br><br>
+                    <strong>Verification Details:</strong><br>
+                    • Confidence: ${verification.confidence}<br>
+                    • ${verification.reason}<br>
+                    • ${verification.description}<br><br>
+                    <em>Please double-check that you're taking the correct medication.</em>
+                `;
+            }
+            
+            message.innerHTML = warningMessage;
+            modal.classList.remove('hidden');
+        }
+
+        function showSuccessModal() {
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+    </script>
+
+    <!-- External scripts -->
+                <script src="api-utils.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <!-- Internationalization Script -->
+    <script type="module" src="i18n.js"></script>
+</body>
+</html> 

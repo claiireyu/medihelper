@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Medication - MediHelper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="i18n.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="pageLoadingOverlay" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p class="text-gray-600" data-i18n="common.loading">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='index.html'" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <span data-i18n="addMedication.newMedication">New Medication</span>
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Mode Selection -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex space-x-4">
+                <button id="newMedicationMode" class="mode-button flex-1 py-3 px-4 text-center border-2 border-primary-500 text-primary-600 font-medium rounded-lg" onclick="switchMode('new')">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span data-i18n="addMedication.newMedication">New Medication</span>
+                </button>
+                <button id="refillMode" class="mode-button flex-1 py-3 px-4 text-center border-2 border-transparent text-gray-500 font-medium rounded-lg" onclick="switchMode('refill')">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span data-i18n="addMedication.refillMedication">Refill Medication</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Refill Medication Selection (hidden by default) -->
+        <div id="refillSelection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 hidden">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="addMedication.selectMedicationToRefill">Select Medication to Refill</h3>
+            <div id="medicationList" class="space-y-3">
+                <!-- Medications will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button id="uploadTab" class="border-primary-500 text-primary-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm tab-button active">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span data-i18n="addMedication.uploadPhoto">Upload Photo</span>
+                    </button>
+                    <button id="previewTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm tab-button">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        <span data-i18n="addMedication.previewEdit">Preview / Edit</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Upload Photo Tab Content -->
+        <div id="uploadContent" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Camera Frame -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="text-center">
+                        <div class="w-full h-64 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-4 relative overflow-hidden">
+                            <div id="cameraPreview" class="w-full h-full flex flex-col items-center justify-center">
+                                <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <p class="text-gray-600 font-medium" data-i18n="addMedication.cameraActive">Camera active - align bottle in frame</p>
+                                <p class="text-sm text-gray-500 mt-2" data-i18n="addMedication.takePhotoOfBottle">Take a photo of your medication bottle</p>
+                            </div>
+                            <img id="capturedImage" class="w-full h-full object-cover hidden" alt="Captured medication">
+                        </div>
+                        
+                        <!-- Camera Controls -->
+                        <div class="flex justify-center space-x-4">
+                            <button id="captureBtn" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span data-i18n="addMedication.takePhoto">Take Photo</span>
+                            </button>
+                            <button id="retakeBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors hidden">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span data-i18n="addMedication.retake">Retake</span>
+                            </button>
+                        </div>
+                        
+                        <!-- File Upload Alternative -->
+                        <div class="mt-4">
+                            <label for="fileInput" class="cursor-pointer">
+                                <div class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                    <span data-i18n="addMedication.orUploadFromGallery">Or upload from gallery</span>
+                                </div>
+                            </label>
+                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drag & Drop Area -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="text-center">
+                        <div id="dragDropArea" class="w-full h-64 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-4 hover:border-primary-400 transition-colors">
+                            <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-600 font-medium mb-2" data-i18n="addMedication.dragAndDrop">Drag & drop</p>
+                            <p class="text-sm text-gray-500 mb-4" data-i18n="addMedication.orClickToBrowse">or click to browse files</p>
+                            <button class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                <span data-i18n="addMedication.chooseFile">Choose File</span>
+                            </button>
+                        </div>
+                        
+                        <button id="nextBtn" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <span data-i18n="addMedication.next">Next</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview / Edit Tab Content -->
+        <div id="previewContent" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Image Preview -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="addMedication.medicationPhoto">Medication Photo</h3>
+                        <div class="w-full h-64 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+                            <img id="previewImage" class="w-full h-full object-cover" alt="Medication preview">
+                        </div>
+                    </div>
+
+                    <!-- Edit Form -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="addMedication.medicationInformation">Medication Information</h3>
+                        <form id="medicationForm" class="space-y-4">
+                            <div>
+                                                                    <label for="medicationName" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <span data-i18n="addMedication.medicationName">Medication Name</span>
+                                    </label>
+                                <input type="text" id="medicationName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            
+                            <div>
+                                                                    <label for="dosage" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <span data-i18n="addMedication.dosage">Dosage</span>
+                                    </label>
+                                <input type="text" id="dosage" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., 500mg">
+                            </div>
+                            
+                            <div>
+                                                                    <label for="schedule" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <span data-i18n="addMedication.schedule">Schedule</span>
+                                    </label>
+                                <input type="text" id="schedule" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., once daily, twice daily, as needed">
+                            </div>
+                            
+
+                            
+                            <div>
+                                                                    <label for="specificTime" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <span data-i18n="addMedication.specificTime">Specific Time (optional)</span>
+                                    </label>
+                                <input type="time" id="specificTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+
+                            <!-- Refill Information Section -->
+                            <div class="border-t border-gray-200 pt-4 mt-6">
+                                <h4 class="text-md font-medium text-gray-900 mb-3">📋 <span data-i18n="addMedication.refillInformation">Refill Information (Optional)</span></h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="dateFilled" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.dateFilled">Date Filled</span>
+                                        </label>
+                                        <input type="date" id="dateFilled" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.quantity">Quantity</span>
+                                        </label>
+                                        <input type="number" id="quantity" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., 90">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="daysSupply" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.daysSupply">Days Supply</span>
+                                        </label>
+                                        <input type="number" id="daysSupply" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., 90">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="refillsRemaining" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.refillsRemaining">Refills Remaining</span>
+                                        </label>
+                                        <input type="number" id="refillsRemaining" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., 2">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="pharmacyName" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.pharmacyName">Pharmacy Name</span>
+                                        </label>
+                                        <input type="text" id="pharmacyName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., CVS Pharmacy">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="rxNumber" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <span data-i18n="addMedication.rxNumber">RX Number</span>
+                                        </label>
+                                        <input type="text" id="rxNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g., 12345">
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label for="refillExpiryDate" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <span data-i18n="addMedication.refillExpiryDate">Refill Expiry Date</span>
+                                    </label>
+                                    <input type="date" id="refillExpiryDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="flex space-x-4 mt-6">
+                            <button id="saveBtn" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-medium transition-colors">
+                                💾 <span data-i18n="addMedication.saveMedication">Save Medication</span>
+                            </button>
+                            <button onclick="switchTab('upload')" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                                <span data-i18n="addMedication.back">Back</span>
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p class="text-gray-700" data-i18n="addMedication.processingMedication">Processing medication...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='index.html'">
+                    <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='schedule.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-xs">Schedule</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='verify.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-xs">Verify</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-primary-600">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span class="text-xs font-medium">Add</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-500 hover:text-gray-700" onclick="window.location.href='history.html'">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="text-xs">History</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Add bottom padding to account for fixed navigation -->
+    <div class="h-20"></div>
+
+    <script>
+        let currentImageFile = null;
+        let extractedInfo = null;
+        let currentMode = 'new'; // 'new' or 'refill'
+        let selectedMedicationForRefill = null;
+
+        // Mode switching functionality
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update mode button styles
+            document.querySelectorAll('.mode-button').forEach(button => {
+                button.classList.remove('border-primary-500', 'text-primary-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            if (mode === 'new') {
+                document.getElementById('newMedicationMode').classList.add('border-primary-500', 'text-primary-600');
+                document.getElementById('newMedicationMode').classList.remove('border-transparent', 'text-gray-500');
+                document.getElementById('refillSelection').classList.add('hidden');
+                selectedMedicationForRefill = null;
+            } else if (mode === 'refill') {
+                document.getElementById('refillMode').classList.add('border-primary-500', 'text-primary-600');
+                document.getElementById('refillMode').classList.remove('border-transparent', 'text-gray-500');
+                document.getElementById('refillSelection').classList.remove('hidden');
+                loadMedicationsForRefill();
+            }
+        }
+
+        // Load medications for refill selection
+        async function loadMedicationsForRefill() {
+            try {
+                const response = await fetch(`${API_BASE}/medications`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success && data.medications.length > 0) {
+                    displayMedicationsForRefill(data.medications);
+                } else {
+                    document.getElementById('medicationList').innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <p>No medications found. Add a medication first.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading medications for refill:', error);
+                document.getElementById('medicationList').innerHTML = `
+                    <div class="text-center text-red-500 py-8">
+                        <p>Error loading medications</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display medications for refill selection
+        function displayMedicationsForRefill(medications) {
+            const container = document.getElementById('medicationList');
+            
+            const html = medications.map(medication => `
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer" onclick="selectMedicationForRefill(${medication.id})">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${medication.name}</h4>
+                            <p class="text-sm text-gray-600">${medication.dosage}</p>
+                            <p class="text-xs text-gray-500" data-original-instruction="${medication.schedule}">${translateMedicationInstruction(medication.schedule)}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        // Select medication for refill
+        function selectMedicationForRefill(medicationId) {
+            // Find the selected medication
+            fetch(`${API_BASE}/medications`, {
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Convert medicationId to number for comparison since it might be passed as string from HTML
+                        const numericMedicationId = parseInt(medicationId);
+                        selectedMedicationForRefill = data.medications.find(med => med.id === numericMedicationId);
+                        
+                        if (selectedMedicationForRefill) {
+                            // Pre-fill the form with the selected medication's data
+                            document.getElementById('medicationName').value = selectedMedicationForRefill.name;
+                            document.getElementById('dosage').value = selectedMedicationForRefill.dosage || '';
+                            document.getElementById('schedule').value = selectedMedicationForRefill.schedule || '';
+
+                            if (selectedMedicationForRefill.specific_time) {
+                                document.getElementById('specificTime').value = selectedMedicationForRefill.specific_time;
+                            }
+                            
+                            // For refills, go straight to preview/save mode since photo is optional
+                            switchTab('preview');
+                            
+                            // Update the save button text
+                            document.getElementById('saveBtn').innerHTML = '💾 <span data-i18n="addMedication.saveRefill">Save Refill</span>';
+                            // Refresh the translation
+                            if (window.i18n) {
+                                const saveBtn = document.getElementById('saveBtn');
+                                const span = saveBtn.querySelector('span');
+                                if (span) {
+                                    span.textContent = window.i18n.t('addMedication.saveRefill');
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error selecting medication for refill:', error);
+                });
+        }
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'border-primary-500', 'text-primary-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            if (tabName === 'upload') {
+                document.getElementById('uploadContent').classList.remove('hidden');
+                document.getElementById('uploadTab').classList.add('active', 'border-primary-500', 'text-primary-600');
+                document.getElementById('uploadTab').classList.remove('border-transparent', 'text-gray-500');
+            } else if (tabName === 'preview') {
+                document.getElementById('previewContent').classList.remove('hidden');
+                document.getElementById('previewTab').classList.add('active', 'border-primary-500', 'text-primary-600');
+                document.getElementById('previewTab').classList.remove('border-transparent', 'text-gray-500');
+            }
+        }
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('dragDropArea').addEventListener('click', () => document.getElementById('fileInput').click());
+        
+        // Drag and drop functionality
+        document.getElementById('dragDropArea').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-primary-400', 'bg-primary-50');
+        });
+        
+        document.getElementById('dragDropArea').addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-primary-400', 'bg-primary-50');
+        });
+        
+        document.getElementById('dragDropArea').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-primary-400', 'bg-primary-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect({ target: { files } });
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                currentImageFile = file;
+                displayImage(file);
+                document.getElementById('nextBtn').disabled = false;
+            }
+        }
+
+        function displayImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Show in camera preview
+                document.getElementById('capturedImage').src = e.target.result;
+                document.getElementById('capturedImage').classList.remove('hidden');
+                document.getElementById('cameraPreview').classList.add('hidden');
+                
+                // Show retake button
+                document.getElementById('retakeBtn').classList.remove('hidden');
+                document.getElementById('captureBtn').classList.add('hidden');
+                
+                // Update preview image
+                document.getElementById('previewImage').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Camera simulation
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            // Simulate camera capture
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('retakeBtn').addEventListener('click', () => {
+            // Reset camera view
+            document.getElementById('capturedImage').classList.add('hidden');
+            document.getElementById('cameraPreview').classList.remove('hidden');
+            document.getElementById('retakeBtn').classList.add('hidden');
+            document.getElementById('captureBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').disabled = true;
+            currentImageFile = null;
+        });
+
+        // Next button functionality
+        document.getElementById('nextBtn').addEventListener('click', async () => {
+            if (!currentImageFile) return;
+            
+            showLoading();
+            
+            try {
+                // Extract medication information
+                const formData = new FormData();
+                formData.append('photo', currentImageFile);
+                
+                const response = await fetch(`${API_BASE}/preview-medication`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    extractedInfo = result.extractedInfo;
+
+                    
+                    // Switch to preview tab first to ensure form fields are visible
+                    switchTab('preview');
+                    
+                    // Wait a moment for the form to be rendered
+                    setTimeout(() => {
+                        // Check if the form exists
+                        const form = document.getElementById('medicationForm');
+                        
+                        // Populate form with extracted data
+                        const nameField = document.getElementById('medicationName');
+                        const dosageField = document.getElementById('dosage');
+                        const scheduleField = document.getElementById('schedule');
+                        
+
+                        
+                        if (nameField) {
+                            nameField.value = extractedInfo.medicationName || '';
+
+                        } else {
+                            console.error('Name field not found!');
+                        }
+                        if (dosageField) {
+                            dosageField.value = extractedInfo.dosage || '';
+
+                        } else {
+                            console.error('Dosage field not found!');
+                        }
+                        if (scheduleField) {
+                            scheduleField.value = extractedInfo.schedule || '';
+
+                        } else {
+                            console.error('Schedule field not found!');
+                        }
+                        
+
+                        
+                        // Populate refill information fields if available
+                        // Note: Backend spreads refillInfo and pharmacyInfo directly into extractedInfo
+                        const hasRefillData = extractedInfo.date_filled || extractedInfo.quantity || extractedInfo.days_supply || extractedInfo.refills_remaining || extractedInfo.refill_expiry_date;
+                        
+                        if (hasRefillData) {
+
+                            
+                            const refillFields = {
+                                dateFilled: document.getElementById('dateFilled'),
+                                quantity: document.getElementById('quantity'),
+                                daysSupply: document.getElementById('daysSupply'),
+                                refillsRemaining: document.getElementById('refillsRemaining'),
+                                refillExpiryDate: document.getElementById('refillExpiryDate')
+                            };
+                            
+
+                            
+                            if (extractedInfo.date_filled && refillFields.dateFilled) {
+                                refillFields.dateFilled.value = extractedInfo.date_filled;
+
+                            }
+                            if (extractedInfo.quantity && refillFields.quantity) {
+                                refillFields.quantity.value = extractedInfo.quantity;
+
+                            }
+                            if (extractedInfo.days_supply && refillFields.daysSupply) {
+                                refillFields.daysSupply.value = extractedInfo.days_supply;
+
+                            }
+                            if (extractedInfo.refills_remaining && refillFields.refillsRemaining) {
+                                refillFields.refillsRemaining.value = extractedInfo.refills_remaining;
+
+                            }
+                            if (extractedInfo.refill_expiry_date && refillFields.refillExpiryDate) {
+                                refillFields.refillExpiryDate.value = extractedInfo.refill_expiry_date;
+
+                            }
+                        } else {
+
+                        }
+                        
+                        // Populate pharmacy information fields if available
+                        const hasPharmacyData = extractedInfo.pharmacy_name || extractedInfo.rx_number || extractedInfo.ndc_code || extractedInfo.manufacturer || extractedInfo.prescriber || extractedInfo.insurance_provider;
+                        
+                        if (hasPharmacyData) {
+
+                            
+                            const pharmacyFields = {
+                                pharmacyName: document.getElementById('pharmacyName'),
+                                rxNumber: document.getElementById('rxNumber')
+                            };
+                            
+
+                            
+                            if (extractedInfo.pharmacy_name && pharmacyFields.pharmacyName) {
+                                pharmacyFields.pharmacyName.value = extractedInfo.pharmacy_name;
+
+                            }
+                            if (extractedInfo.rx_number && pharmacyFields.rxNumber) {
+                                pharmacyFields.rxNumber.value = extractedInfo.rx_number;
+
+                            }
+                        } else {
+
+                        }
+                        
+
+                        
+                        // Force a visual update by triggering change events
+                        if (nameField) nameField.dispatchEvent(new Event('input', { bubbles: true }));
+                        if (dosageField) dosageField.dispatchEvent(new Event('input', { bubbles: true }));
+                        if (scheduleField) scheduleField.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                    }, 100); // Small delay to ensure form is rendered
+                } else {
+                    alert('Error extracting medication information: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Save medication
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            // For refills, photo is optional; for new medications, photo is required
+            if (!currentImageFile && currentMode !== 'refill') {
+                alert('Please upload a photo of your medication first');
+                return;
+            }
+            
+            const name = document.getElementById('medicationName').value.trim();
+            const dosage = document.getElementById('dosage').value.trim();
+            const schedule = document.getElementById('schedule').value;
+
+            const specificTime = document.getElementById('specificTime').value;
+            
+            if (!name || !dosage || !schedule) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                // Only append photo if one exists
+                if (currentImageFile) {
+                    formData.append('photo', currentImageFile);
+                }
+                formData.append('name', name);
+                formData.append('dosage', dosage);
+                formData.append('schedule', schedule);
+                // userId is now handled automatically by session authentication
+                
+                
+                
+                if (specificTime) {
+                    formData.append('specificTime', specificTime);
+                }
+                
+                // Handle refill mode
+                if (currentMode === 'refill' && selectedMedicationForRefill) {
+                    formData.append('isRefill', 'true');
+                    formData.append('originalMedicationId', selectedMedicationForRefill.id);
+                }
+                
+                // Add extracted info if available
+                if (extractedInfo) {
+                    const updatedExtractedInfo = {
+                        ...extractedInfo,
+                        medicationName: name,
+                        dosage: dosage,
+                        schedule: schedule
+                    };
+                    formData.append('extractedInfo', JSON.stringify(updatedExtractedInfo));
+                }
+                
+                // Add refill information if provided
+                const dateFilled = document.getElementById('dateFilled').value;
+                const quantity = document.getElementById('quantity').value;
+                const daysSupply = document.getElementById('daysSupply').value;
+                const refillsRemaining = document.getElementById('refillsRemaining').value;
+                const pharmacyName = document.getElementById('pharmacyName').value;
+                const rxNumber = document.getElementById('rxNumber').value;
+                const refillExpiryDate = document.getElementById('refillExpiryDate').value;
+                
+                if (dateFilled) formData.append('dateFilled', dateFilled);
+                if (quantity) formData.append('quantity', quantity);
+                if (daysSupply) formData.append('daysSupply', daysSupply);
+                if (refillsRemaining) formData.append('refillsRemaining', refillsRemaining);
+                if (pharmacyName) formData.append('pharmacyName', pharmacyName);
+                if (rxNumber) formData.append('rxNumber', rxNumber);
+                if (refillExpiryDate) formData.append('refillExpiryDate', refillExpiryDate);
+                
+                const response = await fetch(`${API_BASE}/medications`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const message = currentMode === 'refill' ? 
+                        `Refill created successfully for ${selectedMedicationForRefill.name}!\n\nYour medication history has been updated.` : 
+                        'Medication added successfully!';
+                    alert(message);
+                    
+                    // Automatically generate refill reminders for new medications
+                    if (currentMode !== 'refill' && result.medication && result.medication.id) {
+                        try {
+            
+                            await generateRefillReminders(result.medication.id);
+                        } catch (error) {
+                            console.warn('Could not auto-generate refill reminders:', error);
+                            // Don't block the user if reminder generation fails
+                        }
+                    }
+                    
+                    // Redirect to schedule page to see the new medication
+                    setTimeout(() => {
+                        window.location.href = 'schedule.html';
+                    }, 100);
+                } else {
+                    const errorMessage = window.i18n ? window.i18n.t('addMedication.errorAddingMedication') : 'Error adding medication';
+                    alert(errorMessage + ': ' + result.message);
+                }
+            } catch (error) {
+                const errorMessage = window.i18n ? window.i18n.t('addMedication.error') : 'Error';
+                alert(errorMessage + ': ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoading() {
+            document.getElementById('loadingState').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        // Function to automatically generate refill reminders
+        async function generateRefillReminders(medicationId) {
+            try {
+    
+                const response = await fetch(`${API_BASE}/medications/${medicationId}/refill-reminders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+    
+                    return data;
+                } else {
+                    throw new Error(data.message || 'Failed to generate reminders');
+                }
+            } catch (error) {
+                console.error('Error generating refill reminders:', error);
+                throw error;
+            }
+        }
+
+        // Initialize the page
+        function initializePage() {
+            // Check for refill parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refillId = urlParams.get('refill');
+            
+            if (refillId) {
+                // Automatically switch to refill mode and select the medication
+                switchMode('refill');
+                // Wait a bit for the medications to load, then select the specific one
+                setTimeout(() => {
+                    selectMedicationForRefill(refillId);
+                }, 500);
+            }
+        }
+
+        // Tab button click handlers
+        document.getElementById('uploadTab').addEventListener('click', () => switchTab('upload'));
+        document.getElementById('previewTab').addEventListener('click', () => {
+            if (currentImageFile) {
+                switchTab('preview');
+            } else {
+                const message = window.i18n ? window.i18n.t('addMedication.pleaseUploadPhotoFirst') : 'Please upload a photo first';
+                alert(message);
+            }
+        });
+
+        // Initialize the page when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
+        } else {
+            initializePage();
+        }
+
+        // Make functions globally accessible
+        window.translateMedicationInstruction = translateMedicationInstruction;
+        window.refreshMedicationInstructions = refreshMedicationInstructions;
+
+        // Hide loading overlay once page is ready
+        function hidePageLoading() {
+            const overlay = document.getElementById('pageLoadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // Show loading overlay during navigation
+        function showPageLoading() {
+            const overlay = document.getElementById('pageLoadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+            }
+        }
+
+        // Hide loading overlay after authentication and page initialization
+        window.addEventListener('load', () => {
+            // Wait a bit for auth to complete
+            setTimeout(hidePageLoading, 500);
+        });
+
+        // Add loading state to navigation buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('button[onclick*="window.location.href"]');
+            navButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    // Don't show loading for back button
+                    if (!button.onclick.toString().includes('index.html')) {
+                        showPageLoading();
+                    }
+                });
+            });
+        });
+
+        // Language change handler
+        window.addEventListener('languageChanged', function() {
+            console.log('🔄 Language changed on add medication page, refreshing content...');
+            
+            // Refresh static HTML content with data-i18n attributes
+            if (window.i18n && typeof window.i18n.updatePage === 'function') {
+                window.i18n.updatePage();
+            } else {
+                // Manual fallback: refresh static content
+                refreshStaticContent();
+            }
+            
+            // Refresh medication instructions in the refill selection list
+            refreshMedicationInstructions();
+        });
+        
+        // Also check if language has changed since page load and refresh if needed
+        if (window.i18n) {
+            const currentLang = window.i18n.getCurrentLanguage();
+            const savedLang = localStorage.getItem('language') || 'en';
+            if (currentLang !== savedLang) {
+                console.log('🔄 Language preference changed, refreshing content...');
+                setTimeout(() => {
+                    refreshStaticContent();
+                    refreshMedicationInstructions();
+                }, 100);
+            }
+        }
+
+        // Function to refresh static content with data-i18n attributes
+        function refreshStaticContent() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing static content...');
+            
+            // Get all elements with data-i18n attributes
+            const elements = document.querySelectorAll('[data-i18n]');
+            
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (key) {
+                    const translatedText = window.i18n.t(key);
+                    if (translatedText && translatedText !== key) {
+                        element.textContent = translatedText;
+                    }
+                }
+            });
+            
+            console.log(`✅ Refreshed ${elements.length} static elements`);
+        }
+
+        // Function to refresh medication instructions when language changes
+        function refreshMedicationInstructions() {
+            if (!window.i18n) return;
+            
+            console.log('🔄 Refreshing medication instructions...');
+            
+            // Refresh instructions in the refill selection list
+            const medicationList = document.getElementById('medicationList');
+            if (medicationList) {
+                // Find all medication instruction paragraphs
+                const instructionElements = medicationList.querySelectorAll('p.text-xs.text-gray-500[data-original-instruction]');
+                console.log(`🔍 Found ${instructionElements.length} instruction elements to refresh`);
+                
+                instructionElements.forEach((element, index) => {
+                    const originalText = element.getAttribute('data-original-instruction');
+                    if (originalText) {
+                        const translatedInstruction = translateMedicationInstruction(originalText);
+                        element.textContent = translatedInstruction;
+                        console.log(`✅ Refreshed instruction ${index}: "${translatedInstruction}"`);
+                    }
+                });
+            }
+        }
+
+        // Function to translate medication instructions (schedule text)
+        function translateMedicationInstruction(instruction) {
+            if (!window.i18n) return instruction;
+            
+            const lowerInstruction = instruction.toLowerCase();
+            console.log('🔄 Translating medication instruction:', instruction);
+            
+            // Common tablet patterns - English
+            if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
+                const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const plural = count > 1 ? 's' : '';
+                    const frequency = match[3];
+                    
+                    // Translate the frequency part
+                    let translatedFrequency = frequency;
+                    if (frequency.includes('every day')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily');
+                    } else if (frequency.includes('twice daily')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.twiceDaily');
+                    } else if (frequency.includes('three times daily')) {
+                        translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.threeTimesDaily');
+                    }
+                    
+                    const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                        count: count, 
+                        plural: plural, 
+                        frequency: translatedFrequency 
+                    });
+                    console.log('✅ Translated tablet instruction:', translated);
+                    return translated;
+                }
+            }
+            
+            // Common tablet patterns - Chinese (reverse translation)
+            if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
+                const match = instruction.match(/服用(\d+)片(.+)/);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const plural = count > 1 ? 's' : '';
+                    
+                    const translated = window.i18n.t('schedule.medicationInstructions.takeTablet', { 
+                        count: count, 
+                        plural: plural, 
+                        frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily')
+                    });
+                    console.log('✅ Reverse translated tablet instruction:', translated);
+                    return translated;
+                }
+            }
+            
+            // Generic fallback - try to translate common words
+            let translatedInstruction = instruction;
+            
+            // Replace common English words with translations
+            if (lowerInstruction.includes('take')) {
+                translatedInstruction = translatedInstruction.replace(/take/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('{')[0].trim());
+            }
+            if (lowerInstruction.includes('tablet')) {
+                translatedInstruction = translatedInstruction.replace(/tablet/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('tablet')[0].split('{')[2]?.split('}')[0] || 'tablet');
+            }
+            if (lowerInstruction.includes('by mouth')) {
+                translatedInstruction = translatedInstruction.replace(/by mouth/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('mouth')[0].split('{')[3]?.split('}')[0] || 'by mouth');
+            }
+            if (lowerInstruction.includes('every day')) {
+                translatedInstruction = translatedInstruction.replace(/every day/gi, window.i18n.t('schedule.medicationInstructions.frequency.daily'));
+            }
+            
+            console.log('✅ Translated medication instruction:', translatedInstruction);
+            return translatedInstruction;
+        }
+        
+        // Check for language changes periodically (every 5 seconds)
+        setInterval(() => {
+            if (window.i18n) {
+                const currentLang = window.i18n.getCurrentLanguage();
+                const savedLang = localStorage.getItem('language') || 'en';
+                if (currentLang !== savedLang) {
+                    console.log('🔄 Language preference changed, refreshing content...');
+                    refreshStaticContent();
+                    refreshMedicationInstructions();
+                }
+            }
+        }, 5000);
+    </script>
+    
+    <!-- Authentication Scripts -->
+            <script src="api-utils.js"></script>
+        <script src="auth.js"></script>
+            <script src="auth-guard.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="header.title">MediHelper - Language Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold text-gray-900" data-i18n="header.title">MediHelper</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+            
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6" data-i18n="language.switchLanguage">Switch Language</h2>
+            
+            <div class="space-y-6">
+                <!-- Language Information -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Current Language</h3>
+                    <p class="text-gray-600" id="current-language">Loading...</p>
+                </div>
+                
+                <!-- Test Translations -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Test Translations</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Navigation</h4>
+                            <p class="text-sm text-gray-600" data-i18n="navigation.home">Home</p>
+                            <p class="text-sm text-gray-600" data-i18n="navigation.schedule">Schedule</p>
+                            <p class="text-sm text-gray-600" data-i18n="navigation.verify">Verify</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Dashboard</h4>
+                            <p class="text-sm text-gray-600" data-i18n="dashboard.greeting">Hi there</p>
+                            <p class="text-sm text-gray-600" data-i18n="dashboard.nextDose">Next Dose</p>
+                            <p class="text-sm text-gray-600" data-i18n="dashboard.todaysSchedule">Today's Schedule</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Actions</h4>
+                            <p class="text-sm text-gray-600" data-i18n="actions.addMedication">Add Medication</p>
+                            <p class="text-sm text-gray-600" data-i18n="actions.manageMedications">Manage Medications</p>
+                            <p class="text-sm text-gray-600" data-i18n="actions.verifyMedication">Verify Medication</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Stats</h4>
+                            <p class="text-sm text-gray-600" data-i18n="stats.adherenceRate">Adherence Rate</p>
+                            <p class="text-sm text-gray-600" data-i18n="stats.activeMedications">Active Medications</p>
+                            <p class="text-sm text-gray-600" data-i18n="stats.daysStreak">Days Streak</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Language Switcher Info -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">How to Use</h3>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-blue-800 text-sm">
+                            <strong>Instructions:</strong><br>
+                            1. Use the language switcher in the header to change between English and Chinese<br>
+                            2. Your language preference will be saved automatically<br>
+                            3. The page will refresh with the new language<br>
+                            4. All text marked with <code class="bg-blue-100 px-1 rounded">data-i18n</code> attributes will be translated
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script type="module" src="i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.i18n) {
+                // Update current language display
+                const currentLangElement = document.getElementById('current-language');
+                if (currentLangElement) {
+                    currentLangElement.textContent = `Current language: ${window.i18n.getCurrentLanguage().toUpperCase()} (${window.i18n.getAvailableLanguages()[window.i18n.getCurrentLanguage()]})`;
+                }
+                
+                // Listen for language changes
+                window.addEventListener('languageChanged', () => {
+                    if (currentLangElement) {
+                        currentLangElement.textContent = `Current language: ${window.i18n.getCurrentLanguage().toUpperCase()} (${window.i18n.getAvailableLanguages()[window.i18n.getCurrentLanguage()]})`;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
