@@ -1693,59 +1693,6 @@ Return only the JSON object, no other text:
   }
 });
 
-app.post('/api/dose-log/fix-afternoon-dose', isAuthenticated, async (req, res) => {
-  try {
-    const { medicationId } = req.body;
-    const userId = req.user.id;
-    
-    if (!medicationId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Medication ID is required'
-      });
-    }
-    
-    const updateQuery = `
-      UPDATE dose_logs 
-      SET dose_type = 'evening' 
-      WHERE medication_id = $1 AND user_id = $2 AND dose_type = 'afternoon' 
-      AND DATE(taken_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') = CURRENT_DATE
-      RETURNING *
-    `;
-    
-    const result = await db.query(updateQuery, [medicationId, userId]);
-    
-    if (result.rows.length > 0) {
-      const todayDate = new Date();
-      const year = todayDate.getFullYear();
-      const month = String(todayDate.getMonth() + 1).padStart(2, '0');
-      const day = String(todayDate.getDate()).padStart(2, '0');
-      const today = `${year}-${month}-${day}`;
-      scheduleCache.clearUser(userId);
-      
-      res.json({
-        success: true,
-        message: `Updated ${result.rows.length} dose log(s) from afternoon to evening`,
-        updatedLogs: result.rows
-      });
-    } else {
-      res.json({
-        success: true,
-        message: 'No afternoon doses found to update',
-        updatedLogs: []
-      });
-    }
-    
-  } catch (error) {
-    console.error('Error fixing afternoon dose:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fix afternoon dose',
-      error: error.message
-    });
-  }
-});
-
 // ============================================================================
 // SCHEDULE ENDPOINTS
 // ============================================================================
@@ -1974,42 +1921,9 @@ app.post('/api/schedule/warm-cache', isAuthenticated, async (req, res) => {
   }
 });
 
-app.post('/api/force-refresh-schedule', isAuthenticated, async (req, res) => {
-  try {
-    const { date } = req.body;
-    const userId = req.user.id;
-    
-    if (!date) {
-      return res.status(400).json({
-        success: false,
-        message: 'Date is required'
-      });
-    }
-    
-    scheduleCache.clearUser(userId);
-    console.log('Force invalidated all schedules for force refresh');
-    
-    const result = await persistentScheduleService.forceRefreshPersistentSchedule(userId, date);
-    
-    res.json({
-      success: true,
-      message: 'Schedule refreshed successfully',
-      result: result
-    });
-    
-  } catch (error) {
-    console.error('Error refreshing schedule:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to refresh schedule',
-      error: error.message
-    });
-  }
-});
+// Removed unused /api/force-refresh-schedule endpoint
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'MediHelper API is running' });
-});
+// Removed unused /api/health endpoint
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
@@ -3191,33 +3105,3 @@ app.get('/api/medications/refill-status', isAuthenticated, async (req, res) => {
   }
 });
 
-// ============================================================================
-// ADMIN ENDPOINTS
-// ============================================================================
-
-app.post('/api/admin/migrate-timezone', async (req, res) => {
-  try {
-    await db.query(`
-      ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS timezone VARCHAR(100) DEFAULT 'America/Los_Angeles'
-    `);
-    
-    await db.query(`
-      CREATE INDEX IF NOT EXISTS idx_users_timezone ON users(timezone)
-    `);
-    
-    console.log('Timezone migration completed successfully');
-    
-    res.json({
-      success: true,
-      message: 'Timezone migration completed successfully'
-    });
-  } catch (error) {
-    console.error('Timezone migration failed:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Migration failed',
-      error: error.message
-    });
-  }
-});
