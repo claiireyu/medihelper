@@ -148,23 +148,38 @@ medihelper/
 ## 🔧 API Endpoints
 
 ### Authentication
-- `POST /auth/google` - Google OAuth authentication
-- `GET /auth/logout` - User logout
+- `GET /api/auth/user` — Get current authenticated user
+- `POST /api/auth/logout` — Log out the current user
 
 ### Medications
-- `GET /api/medications` - List user medications
-- `POST /api/medications` - Add new medication
-- `PUT /api/medications/:id` - Update medication
-- `DELETE /api/medications/:id` - Remove medication
+- `GET /api/medications` — List user medications
+- `POST /api/medications` — Add new medication (supports photo upload)
+- `PUT /api/medications/:id` — Update medication
+- `DELETE /api/medications/:id` — Remove medication
+- `GET /api/medications/:id/history` — Medication history
+- `GET /api/medications/:id/refills` — List refills for a medication
 
 ### Refills
-- `GET /api/refills/status` - Get refill status summary
-- `GET /api/refills/reminders` - Get refill reminders
-- `POST /api/refills/calculate` - Calculate refill dates
+- `GET /api/medications/:id/refill-status` — Refill status for a medication
+- `GET /api/medications/:id/refill-calculation` — Calculation details for a medication
+- `POST /api/medications/:id/refill-reminders` — Generate refill reminders for a medication
+- `GET /api/refill-reminders` — List refill reminders (supports filtering by medication_id)
+- `PUT /api/refill-reminders/:id/status` — Update a reminder status
+- `GET /api/dashboard/refills` — Dashboard view of upcoming refills
 
 ### Schedules
-- `POST /api/schedules/parse` - Parse medication schedule
-- `GET /api/schedules/:id` - Get schedule details
+- `GET /api/medications/schedule` — Schedule for a given date
+- `POST /api/schedule/warm-cache` — Warm schedule cache for a date range
+
+### Dose Logging
+- `POST /api/record-dose-with-photo` — Record a dose with photo evidence
+- `GET /api/dose-log/history` — Dose log history
+
+### Other
+- `GET /api/dashboard/stats` — Dashboard statistics
+- `GET /api/next-dose` — Next upcoming dose for the user
+- `GET /api/medication-eligibility` — Check if a medication is eligible to verify now
+- `POST /api/preview-medication` — Parse/preview medication details before saving
 
 ## Core Algorithms
 
