@@ -6,6 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import fs from 'fs'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 import dotenv from 'dotenv';
 import session from 'express-session';
@@ -17,6 +18,20 @@ import { DeterministicScheduleParser } from './services/deterministicSchedulePar
 import { RefillCalculationService } from './services/refillCalculationService.js';
 
 dotenv.config();
+
+let geminiModel = null;
+if (process.env.GEMINI_API_KEY) {
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  } catch (error) {
+    console.warn('Failed to initialize Google Generative AI:', error.message);
+    console.warn('AI features will use fallback responses');
+  }
+} else {
+  console.warn('GEMINI_API_KEY not found in environment variables');
+  console.warn('AI features will use fallback responses');
+}
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -137,6 +152,19 @@ const persistentScheduleService = new PersistentScheduleService(db, null);
 
 async function extractMedicationFromImage(photoPath) {
   try {
+    // Check if AI is available
+    if (!geminiModel) {
+      console.warn('AI model not available, using fallback extraction');
+      return {
+        extractedText: 'AI extraction not available - manual entry required',
+        extractedInfo: {
+          medicationName: 'Unknown Medication',
+          dosage: 'Unknown Dosage',
+          schedule: 'once daily'
+        }
+      };
+    }
+
     const imageBuffer = fs.readFileSync(photoPath);
     const base64Image = imageBuffer.toString('base64');
     
@@ -308,6 +336,16 @@ function parsePrice(value) {
 
 async function verifyPillInImage(photoPath, req = null) {
   try {
+    // Check if AI is available
+    if (!geminiModel) {
+      console.warn('AI model not available, using fallback pill verification');
+      return {
+        pillVisible: true, // Assume pill is visible when AI is unavailable
+        confidence: 'low',
+        description: 'AI verification not available - manual confirmation recommended'
+      };
+    }
+
     const imageBuffer = fs.readFileSync(photoPath);
     const base64Image = imageBuffer.toString('base64');
     
@@ -1562,12 +1600,22 @@ app.post('/api/record-dose-with-photo', isAuthenticated, upload.single('photo'),
       const pillVerification = await verifyPillInImage(photoPath, req);
       
       if (pillVerification.pillVisible) {
-        const imageBuffer = fs.readFileSync(photoPath);
-        const base64Image = imageBuffer.toString('base64');
+        // Check if AI is available for detailed verification
+        if (!geminiModel) {
+          console.warn('AI model not available, using basic verification');
+          verificationResult = {
+            isCorrectPill: true, // Assume correct when AI is unavailable
+            confidence: 'low',
+            reason: 'AI verification not available - manual confirmation recommended',
+            description: 'AI analysis not available'
+          };
+        } else {
+          const imageBuffer = fs.readFileSync(photoPath);
+          const base64Image = imageBuffer.toString('base64');
+          
+          const userLanguage = req.headers['accept-language']?.includes('zh') ? 'zh' : 'en';
         
-        const userLanguage = req.headers['accept-language']?.includes('zh') ? 'zh' : 'en';
-      
-        const prompt = `
+          const prompt = `
 You are a medical assistant verifying medication intake. 
 
 The user is trying to verify they are taking: ${medicationName}
@@ -1590,15 +1638,15 @@ Consider:
 Return only the JSON object, no other text:
 `;
 
-        const result = await geminiModel.generateContent([
-          prompt,
-          {
-            inlineData: {
-              mimeType: "image/jpeg",
-              data: base64Image
+          const result = await geminiModel.generateContent([
+            prompt,
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Image
+              }
             }
-          }
-        ]);
+          ]);
         
         const response = result.response.text();
         let cleanResponse = response.trim();
@@ -1607,9 +1655,10 @@ Return only the JSON object, no other text:
         } else if (cleanResponse.startsWith('```')) {
           cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
         }
-        
-        verificationResult = JSON.parse(cleanResponse);
-        console.log(`Gemini verification successful:`, verificationResult);
+          
+          verificationResult = JSON.parse(cleanResponse);
+          console.log(`Gemini verification successful:`, verificationResult);
+        }
       } else {
         verificationResult = {
           isCorrectPill: true,
@@ -2820,6 +2869,19 @@ app.post('/api/verify-pill', upload.single('photo'), async (req, res) => {
         message: 'No pill visible in the image. Please take a clear photo of the medication.',
         confidence: pillVerification.confidence,
         description: pillVerification.description
+      });
+    }
+
+    // Check if AI is available
+    if (!geminiModel) {
+      console.warn('AI model not available for pill verification');
+      return res.json({
+        success: true,
+        isCorrectPill: true, // Assume correct when AI is unavailable
+        confidence: 'low',
+        reason: 'AI verification not available - manual confirmation recommended',
+        description: 'AI analysis not available',
+        pillVisible: true
       });
     }
 

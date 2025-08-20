@@ -474,9 +474,10 @@ describe('API Endpoint Integration Tests', () => {
       
       expect(response.status).toBe(200);
       expect(data).toBeDefined();
-      expect(data.totalCachedSchedules).toBeDefined();
-      expect(data.totalPersistentSchedules).toBeDefined();
-      expect(data.totalTemplateSchedules).toBeDefined();
+      expect(data.schedules).toBeDefined();
+      expect(data.templates).toBeDefined();
+      expect(data.totalKeys).toBeDefined();
+      expect(data.userVersions).toBeDefined();
     });
 
     it('should clear user-specific cache', async () => {
@@ -500,10 +501,10 @@ describe('API Endpoint Integration Tests', () => {
 
       // Verify cache is cleared by checking stats
       const statsResponse = await fetch(`${baseUrl}/api/cache/stats`);
-      const stats = await statsResponse.json();
+      const statsData = await statsResponse.json();
       
       // Cache should be empty after clearing
-      expect(stats.totalPersistentSchedules).toBe(0);
+      expect(statsData.schedules).toBe(0);
     });
   });
 

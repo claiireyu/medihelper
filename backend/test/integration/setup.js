@@ -295,8 +295,12 @@ export async function createTestDoseLog(userId, medicationId, doseLogData = {}) 
 
 // Create test refill reminder
 export async function createTestRefillReminder(userId, medicationId, reminderData = {}) {
+  // Generate unique date to avoid duplicates if no specific date is provided
+  const now = new Date();
+  const uniqueDate = reminderData.reminder_date || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
   const defaultReminder = {
-    reminder_date: '2024-02-01',
+    reminder_date: uniqueDate,
     reminder_type: 'email',
     status: 'pending',
     message: 'Test reminder',

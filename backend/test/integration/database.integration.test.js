@@ -283,10 +283,10 @@ describe('Database Integration Tests', () => {
       expect(tomorrowSchedule).toBeDefined();
 
       // Verify template was created
-      const templateExists = scheduleCache.hasTemplateSchedule(testUser.id);
+      const templateExists = scheduleCache.hasTemplate(testUser.id);
       // Note: Template creation logic may not work as expected in test environment
       // For now, just verify the cache method exists
-      expect(typeof scheduleCache.hasTemplateSchedule).toBe('function');
+      expect(typeof scheduleCache.hasTemplate).toBe('function');
     });
 
     it('should handle historical schedule generation', async () => {
