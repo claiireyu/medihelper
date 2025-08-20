@@ -33,19 +33,15 @@ class AuthManager {
 
     async checkAuthStatus() {
         try {
-            console.log('🔐 Checking authentication status...');
             const response = await fetch('/api/auth/user', {
                 credentials: 'include'
             });
             
-            console.log(`🔐 Auth response status: ${response.status}`);
             
             if (response.ok) {
                 const userData = await response.json();
-                console.log('🔐 Auth response data:', userData);
                 
                 if (userData.success && userData.user) {
-                    console.log('✅ User authenticated:', userData.user.name);
                     this.currentUser = userData.user;
                     
                     // Load user's saved language preference
@@ -55,13 +51,11 @@ class AuthManager {
                     this.renderAuthUI();
                     return true;
                 } else {
-                    console.log('ℹ️ User not authenticated (no user data)');
                     this.currentUser = null;
                     this.renderAuthUI();
                     return false;
                 }
             } else {
-                console.log(`ℹ️ Auth response not OK: ${response.status}`);
                 this.currentUser = null;
                 this.renderAuthUI();
                 return false;
@@ -165,7 +159,6 @@ class AuthManager {
         if (window.i18n) {
             const languageLoaded = window.i18n.reloadSavedLanguage();
         } else {
-            console.log('⚠️ i18n system not available for language preference loading');
         }
     }
 }
@@ -178,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         authManager = new AuthManager();
         // Make authManager globally available
         window.authManager = authManager;
-        console.log('✅ AuthManager initialized and made globally available');
     }
 });
 

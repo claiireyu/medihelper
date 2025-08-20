@@ -1,23 +1,21 @@
-// API utilities for HTML-based frontend
-// This file provides the API object and helper functions needed by the HTML pages
+// Environment-aware API configuration
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Use relative path in production
+  : 'http://localhost:8000/api';
 
-const API_BASE = 'http://localhost:8000/api';
+// Fallback for non-module environments (like direct HTML usage)
+if (typeof window !== 'undefined') {
+  window.API_BASE = API_BASE;
+}
 
-// Make API_BASE globally available
-window.API_BASE = API_BASE;
-
-// Helper function to get user ID
 function getUserId() {
-    // Try to get from auth manager first
     if (window.authManager && window.authManager.isAuthenticated()) {
         return window.authManager.getUserId();
     }
     
-    // Fallback to localStorage or default
     return localStorage.getItem('userId') || '1';
 }
 
-// Helper function to get user's current timezone
 function getUserTimezone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -27,29 +25,24 @@ function getUserTimezone() {
     }
 }
 
-// Helper function to make authenticated API requests
 async function makeAuthenticatedRequest(url, options = {}) {
-    // Set default headers
     const defaultHeaders = {
         'Content-Type': 'application/json',
         ...options.headers
     };
     
     if (options.body instanceof FormData) {
-        delete defaultHeaders['Content-Type']; // Let browser set it for FormData
+        delete defaultHeaders['Content-Type'];
     }
     
     try {
-        // Make the request with credentials to include session cookies
         const response = await fetch(url, {
             credentials: 'include',
             headers: defaultHeaders,
             ...options
         });
         
-        // If we get a 401, redirect to login
         if (response.status === 401) {
-            console.log('🔐 401 Authentication required, redirecting to login');
             if (window.authManager) {
                 window.authManager.login();
             } else {
@@ -58,20 +51,16 @@ async function makeAuthenticatedRequest(url, options = {}) {
             throw new Error('Authentication required');
         }
         
-        // Log other status codes for debugging
         if (response.status >= 400) {
-            console.log(`⚠️ API response status: ${response.status} for ${url}`);
         }
         
-        // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return response;
         } else {
-            // Response is not JSON (probably HTML error page)
-            console.error(`❌ API returned non-JSON response for ${url}:`, contentType);
+            console.error(`API returned non-JSON response for ${url}:`, contentType);
             const text = await response.text();
-            console.error('❌ Response preview:', text.substring(0, 200));
+            console.error('Response preview:', text.substring(0, 200));
             throw new Error(`API returned ${response.status} ${response.statusText} - expected JSON but got ${contentType || 'unknown content type'}`);
         }
         
@@ -85,24 +74,18 @@ async function makeAuthenticatedRequest(url, options = {}) {
     }
 }
 
-// Helper to make timezone-aware API calls
 function makeTimezoneAwareAPICall(apiFunction, ...args) {
     const userTimezone = getUserTimezone();
-    console.log(`🌍 Using timezone: ${userTimezone}`);
     
-    // For getMedicationSchedule, insert timezone as the third parameter
     if (apiFunction === window.API.getMedicationSchedule) {
         const [date, showTakenDoses] = args;
         return apiFunction(date, showTakenDoses, userTimezone);
     }
-    
-    // For other functions, append timezone to the end
+
     return apiFunction(...args, userTimezone);
 }
 
-// Global API object
 window.API = {
-    // Dashboard
     getDashboardStats: async () => {
         return makeAuthenticatedRequest(`${API_BASE}/dashboard/stats`);
     },
@@ -111,7 +94,6 @@ window.API = {
         return makeAuthenticatedRequest(`${API_BASE}/next-dose`);
     },
     
-    // Medications
     getMedications: async () => {
         return makeAuthenticatedRequest(`${API_BASE}/medications`);
     },
@@ -150,7 +132,6 @@ window.API = {
         return makeAuthenticatedRequest(`${API_BASE}/medications/schedule?${params}`);
     },
     
-    // Dose tracking
     logDose: async (medicationId, doseType, photoPath = null, notes = null) => {
         const body = {
             medicationId: medicationId,
@@ -178,12 +159,10 @@ window.API = {
         return makeAuthenticatedRequest(`${API_BASE}/dose-log/history?${params}`);
     },
     
-    // Refills
     getRefills: async () => {
         return makeAuthenticatedRequest(`${API_BASE}/refills`);
     },
     
-    // Health logs
     logHealthData: async (healthData) => {
         return makeAuthenticatedRequest(`${API_BASE}/health-logs`, {
             method: 'POST',
@@ -192,5 +171,4 @@ window.API = {
     }
 };
 
-// Make makeTimezoneAwareAPICall globally available
 window.makeTimezoneAwareAPICall = makeTimezoneAwareAPICall;

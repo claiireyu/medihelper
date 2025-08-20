@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medication History - MediHelper</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="i18n.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -22,6 +21,78 @@
             }
         }
     </script>
+    <style>
+        /* Smooth transitions for history page */
+        * {
+            transition: all 0.2s ease-out;
+        }
+        
+        /* Page transitions */
+        .page-transition {
+            animation: pageFadeIn 0.4s ease-out;
+        }
+        
+        /* History item transitions */
+        .history-item {
+            transition: all 0.3s ease-out;
+            transform: translateX(0);
+        }
+        
+        .history-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Stats card transitions */
+        .stats-card {
+            transition: all 0.3s ease-out;
+            transform: translateY(0);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Filter dropdown transitions */
+        #filterDropdown {
+            transition: all 0.3s ease-out;
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        
+        #filterDropdown.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        /* Content animations */
+        .content-fade-in {
+            animation: contentFadeIn 0.5s ease-out;
+        }
+        
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes contentFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -85,7 +156,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
         
         <!-- Page Header with Greeting -->
         <div class="mb-8">
@@ -230,61 +301,43 @@
 
     <script>
 
-        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             loadStats();
             loadRecentHistory();
             loadAllMedications();
             
-            // Set up tab switching
             document.getElementById('recentTab').addEventListener('click', () => switchTab('recent'));
             document.getElementById('medicationsTab').addEventListener('click', () => switchTab('medications'));
             
-            // Set up dropdown functionality
             setupDropdown();
             
-            // Check if i18n is ready and refresh content if needed
             checkI18nAndRefresh();
         });
 
-        // Function to check if i18n is ready and refresh content
         function checkI18nAndRefresh() {
-            // Wait a bit for i18n to initialize
             setTimeout(() => {
                 if (window.i18n && typeof window.i18n.t === 'function') {
-                    console.log('✅ i18n system ready, refreshing content...');
-                    // Refresh all dynamic content to ensure proper translation
                     refreshDynamicContent();
                 } else {
-                    console.log('⏳ i18n not ready yet, retrying...');
-                    // Retry after a short delay
                     setTimeout(checkI18nAndRefresh, 100);
                 }
             }, 200);
         }
 
-        // Language change handler
         window.addEventListener('languageChanged', function() {
-            console.log('🔄 Language changed on history page, refreshing content...');
-            
-            // Refresh static HTML content with data-i18n attributes
             if (window.i18n && typeof window.i18n.updatePage === 'function') {
                 window.i18n.updatePage();
             } else {
-                // Manual fallback: refresh static content
                 refreshStaticContent();
             }
             
-            // Refresh dynamic content
             refreshDynamicContent();
         });
         
-        // Also check if language has changed since page load and refresh if needed
         if (window.i18n) {
             const currentLang = window.i18n.getCurrentLanguage();
             const savedLang = localStorage.getItem('language') || 'en';
             if (currentLang !== savedLang) {
-                console.log('🔄 Language preference changed, refreshing content...');
                 setTimeout(() => {
                     refreshStaticContent();
                     refreshDynamicContent();
@@ -292,13 +345,9 @@
             }
         }
 
-        // Function to refresh static content with data-i18n attributes
         function refreshStaticContent() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing static content...');
-            
-            // Get all elements with data-i18n attributes
             const elements = document.querySelectorAll('[data-i18n]');
             
             elements.forEach(element => {
@@ -311,22 +360,15 @@
                 }
             });
             
-            console.log(`✅ Refreshed ${elements.length} static elements`);
         }
 
-        // Function to refresh dynamic content when language changes
         function refreshDynamicContent() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing dynamic content...');
-            
-            // Refresh date labels in recent history
             refreshDateLabels();
             
-            // Refresh empty state messages
             refreshEmptyStateMessages();
             
-            // Refresh dynamic text
             refreshDynamicText();
         }
 
@@ -334,20 +376,17 @@
             const filterBtn = document.getElementById('filterBtn');
             const filterDropdown = document.getElementById('filterDropdown');
             
-            // Toggle dropdown on button click
             filterBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 filterDropdown.classList.toggle('hidden');
             });
             
-            // Close dropdown when clicking outside
             document.addEventListener('click', function(e) {
                 if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
                     filterDropdown.classList.add('hidden');
                 }
             });
             
-            // Handle dropdown item clicks
             const dropdownItems = filterDropdown.querySelectorAll('button');
             dropdownItems.forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -360,8 +399,6 @@
         }
 
         function handleFilterSelection(selection) {
-
-            
             switch(selection) {
                 case window.i18n ? window.i18n.t('history.last7Days') : 'Last 7 days':
                 case 'Last 7 days':
@@ -385,18 +422,15 @@
         }
 
         function switchTab(tabName) {
-            // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
             
-            // Remove active class from all tab buttons
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active', 'border-primary-500', 'text-primary-600');
                 button.classList.add('border-transparent', 'text-gray-500');
             });
             
-            // Show selected tab content
             if (tabName === 'recent') {
                 document.getElementById('recentContent').classList.remove('hidden');
                 document.getElementById('recentTab').classList.add('active', 'border-primary-500', 'text-primary-600');
@@ -410,14 +444,12 @@
 
         async function loadStats() {
             try {
-                // Load today's schedule to get today's taken/pending counts
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 const day = String(today.getDate()).padStart(2, '0');
                 const todayString = `${year}-${month}-${day}`;
                 
-                // Get today's schedule with taken status
                 const scheduleResponse = await makeTimezoneAwareAPICall(API.getMedicationSchedule, todayString, true);
                 const scheduleData = await scheduleResponse.json();
                 
@@ -438,19 +470,15 @@
                 
                 const pendingToday = totalScheduledToday - takenToday;
                 
-                // Update today's taken/pending
                 document.getElementById('takenToday').textContent = takenToday;
                 document.getElementById('pendingToday').textContent = Math.max(0, pendingToday);
                 
-                // Use the dashboard stats API for total medications count (to match home screen)
                 const dashboardResponse = await API.getDashboardStats();
                 const dashboardData = await dashboardResponse.json();
                 
                 if (dashboardData.success) {
-                    // Use the same logic as the home screen
                     document.getElementById('totalMedications').textContent = dashboardData.stats.activeMedications;
                 } else {
-                    // Fallback to counting unique medications ourselves
                     const medicationsResponse = await API.getMedications();
                     const medicationsData = await medicationsResponse.json();
                     
@@ -461,7 +489,6 @@
                 
             } catch (error) {
                 console.error('Error loading stats:', error);
-                // Set fallback values
                 document.getElementById('takenToday').textContent = '0';
                 document.getElementById('pendingToday').textContent = '0';
                 document.getElementById('totalMedications').textContent = '0';
@@ -475,7 +502,6 @@
                 const response = await API.getDoseHistory(days);
                 const data = await response.json();
                 
-                // The API returns data directly, not wrapped in a success object
                 displayRecentHistory(data.takenDoses || []);
             } catch (error) {
                 console.error('Error loading recent history:', error);
@@ -493,7 +519,6 @@
                 return;
             }
             
-            // Group doses by date
             const groupedDoses = groupDosesByDate(takenDoses);
             
             let html = '';
@@ -539,16 +564,13 @@
                 hour12: true 
             });
             
-            // Translate schedule only
             let translatedSchedule = dose.schedule;
             
             if (window.i18n && typeof window.i18n.t === 'function') {
                 try {
-                    // Translate schedule using the medication instruction translator
                     translatedSchedule = translateMedicationInstruction(dose.schedule);
                 } catch (error) {
-                    console.warn('Translation failed in dose history, using fallback:', error);
-                    // Keep original values if translation fails
+                    // Translation failed, using original
                 }
             }
             
@@ -619,15 +641,13 @@
                 year: 'numeric' 
             });
             
-            // Translate schedule if i18n is available
             let translatedSchedule = medication.schedule;
             
             if (window.i18n && typeof window.i18n.t === 'function') {
                 try {
                     translatedSchedule = translateMedicationInstruction(medication.schedule);
                 } catch (error) {
-                    console.warn('Translation failed, using fallback:', error);
-                    // Keep original values if translation fails
+                    // Translation failed, using original
                 }
             }
             
@@ -692,13 +712,9 @@
             document.getElementById('loadingState').classList.add('hidden');
         }
 
-        // Function to refresh date labels when language changes
         function refreshDateLabels() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing date labels...');
-            
-            // Find all date labels in recent history
             const dateLabels = document.querySelectorAll('#recentHistory h4');
             dateLabels.forEach(label => {
                 const text = label.textContent;
@@ -710,43 +726,32 @@
             });
         }
 
-        // Function to refresh empty state messages when language changes
         function refreshEmptyStateMessages() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing empty state messages...');
-            
-            // Refresh empty history state if visible
             const recentHistory = document.getElementById('recentHistory');
             if (recentHistory && recentHistory.innerHTML.includes('No recent medication history')) {
                 recentHistory.innerHTML = createEmptyHistoryState();
             }
             
-            // Refresh empty medications state if visible
             const allMedications = document.getElementById('allMedications');
             if (allMedications && allMedications.innerHTML.includes('No medications found')) {
                 allMedications.innerHTML = createEmptyMedicationsState();
             }
         }
 
-        // Function to refresh dynamic text when language changes
         function refreshDynamicText() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing dynamic text...');
-            
-            // Refresh dose info text
             const doseInfoElements = document.querySelectorAll('[data-original-dose-info]');
             doseInfoElements.forEach(element => {
                 const originalText = element.getAttribute('data-original-dose-info');
                 if (originalText) {
-                    // Translate schedule only
                     const translatedSchedule = translateMedicationInstruction(originalText);
                     element.textContent = translatedSchedule;
                 }
             });
             
-            // Refresh schedule text
             const scheduleElements = document.querySelectorAll('[data-original-schedule]');
             scheduleElements.forEach(element => {
                 const originalText = element.getAttribute('data-original-schedule');
@@ -756,7 +761,6 @@
                 }
             });
             
-            // Refresh specific time text
             const specificTimeElements = document.querySelectorAll('[data-original-specific-time]');
             specificTimeElements.forEach(element => {
                 const originalText = element.getAttribute('data-original-specific-time');
@@ -768,7 +772,6 @@
                 }
             });
             
-            // Refresh added text
             const addedElements = document.querySelectorAll('[data-original-added]');
             addedElements.forEach(element => {
                 const originalText = element.getAttribute('data-original-added');
@@ -781,15 +784,12 @@
             });
         }
 
-        // Function to translate medication instructions (schedule text)
         function translateMedicationInstruction(instruction) {
             if (!window.i18n || typeof window.i18n.t !== 'function') return instruction;
             
             const lowerInstruction = instruction.toLowerCase();
-            console.log('🔄 Translating medication instruction:', instruction);
             
             try {
-                // Common tablet patterns - English
                 if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
                     const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
                     if (match) {
@@ -797,7 +797,6 @@
                         const plural = count > 1 ? 's' : '';
                         const frequency = match[3];
                         
-                        // Translate the frequency part
                         let translatedFrequency = frequency;
                         if (frequency.includes('every day')) {
                             translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily') || 'every day';
@@ -812,12 +811,10 @@
                             plural: plural, 
                             frequency: translatedFrequency 
                         }) || instruction;
-                        console.log('✅ Translated tablet instruction:', translated);
                         return translated;
                     }
                 }
                 
-                // Common tablet patterns - Chinese (reverse translation)
                 if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
                     const match = instruction.match(/服用(\d+)片(.+)/);
                     if (match) {
@@ -829,15 +826,12 @@
                             plural: plural, 
                             frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily') || 'every day'
                         }) || instruction;
-                        console.log('✅ Reverse translated tablet instruction:', translated);
                         return translated;
                     }
                 }
                 
-                // Generic fallback - try to translate common words
                 let translatedInstruction = instruction;
                 
-                // Replace common English words with translations
                 if (lowerInstruction.includes('take')) {
                     const takeTranslation = window.i18n.t('schedule.medicationInstructions.takeTablet');
                     if (takeTranslation && takeTranslation !== 'schedule.medicationInstructions.takeTablet') {
@@ -865,25 +859,31 @@
                     }
                 }
                 
-                console.log('✅ Translated medication instruction:', translatedInstruction);
                 return translatedInstruction;
             } catch (error) {
-                console.warn('Translation failed, returning original instruction:', error);
                 return instruction;
             }
         }
 
-        // Make functions globally accessible for debugging
         window.translateMedicationInstruction = translateMedicationInstruction;
         window.refreshDynamicText = refreshDynamicText;
         
-        // Check for language changes periodically (every 5 seconds)
+        function ensureI18nLoaded() {
+            if (!window.i18n) {
+                setTimeout(ensureI18nLoaded, 100);
+                return;
+            }
+            
+            window.i18n.applyLanguage();
+        }
+        
+        ensureI18nLoaded();
+        
         setInterval(() => {
             if (window.i18n) {
                 const currentLang = window.i18n.getCurrentLanguage();
                 const savedLang = localStorage.getItem('language') || 'en';
                 if (currentLang !== savedLang) {
-                    console.log('🔄 Language preference changed, refreshing content...');
                     refreshStaticContent();
                     refreshDynamicContent();
                 }
@@ -892,8 +892,9 @@
     </script>
     
     <!-- Auth and API Scripts -->
-    <script src="api-utils.js"></script>
-    <script src="auth.js"></script>
-    <script src="auth-guard.js"></script>
+    <script type="module" src="i18n.js"></script>
+    <script type="module" src="api-utils.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="auth-guard.js"></script>
 </body>
 </html> 

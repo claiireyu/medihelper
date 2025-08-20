@@ -12,9 +12,6 @@ dotenv.config({ path: join(__dirname, 'integration/test.env') });
 process.env.NODE_ENV = 'test';
 
 // Verify test database configuration
-console.log('🧪 Test Environment Configuration:');
-console.log(`   TEST_DB_NAME: ${process.env.TEST_DB_NAME}`);
-console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
 
 // Ensure we're using test database
 if (process.env.TEST_DB_NAME === process.env.DB_NAME) {
@@ -22,15 +19,12 @@ if (process.env.TEST_DB_NAME === process.env.DB_NAME) {
   console.warn('   This could cause data corruption in production.');
 }
 
-// Mock console.log for cleaner test output (optional)
 if (process.env.NODE_ENV === 'test') {
-  const originalLog = console.log;
-  console.log = (...args) => {
-    // Only show logs if explicitly enabled
-    if (process.env.TEST_VERBOSE === 'true') {
-      originalLog(...args);
-    }
-  };
+  // Only show logs if explicitly enabled
+  if (process.env.TEST_VERBOSE === 'true') {
+    // Enable verbose logging if needed
+    console.log('Test verbose logging enabled');
+  }
 }
 
 // Ensure database connections are mocked for unit tests

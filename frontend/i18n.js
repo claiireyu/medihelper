@@ -23,6 +23,7 @@ const en = {
     success: 'Success',
     warning: 'Warning',
     info: 'Information',
+    note: 'Note',
     days: 'days',
     units: 'units',
     notSpecified: 'Not specified'
@@ -244,6 +245,9 @@ const en = {
       refillDueInDays: 'due in {days} days'
     },
     
+    // Success messages
+    refillCreatedSuccess: 'Refill created successfully! Refill reminders have been updated.',
+    
     // Medication instruction translations
     medicationInstructions: {
       takeTablet: 'Take {quantity} tablet{plural} by mouth {frequency}',
@@ -336,6 +340,17 @@ const en = {
     notificationsBlocked: 'Notifications blocked. Please enable in browser settings.',
     showingAllDoses: 'Showing all doses (auto-updating)',
     completedDosesHidden: 'Completed doses are hidden by default. Click "Show Taken" to see them.',
+    // Notification translations
+    notifications: {
+      medicationReminder: 'Medication Reminder',
+      timeToTake: 'Time to take {medication}!',
+      reminderSystemRestarted: 'Reminder system restarted! You\'ll receive medication reminders.',
+      notificationsEnabled: 'Notifications enabled! You\'ll now receive medication reminders.',
+      permissionDenied: 'Notification permission denied. Please enable in browser settings.',
+      errorEnabling: 'Error enabling notifications. Please try again.',
+      reminderSystemStarted: 'Reminder system started! You\'ll receive medication reminders.',
+      medicationReminderPrefix: 'Medication reminder:'
+    },
     // Medication instruction patterns
     medicationInstructions: {
       takeTablet: 'Take {count} tablet{plural} by mouth {frequency}',
@@ -425,6 +440,37 @@ const en = {
     verifyingMedication: 'Verifying medication...',
     backToSelection: 'Back to selection',
     clickToCaptureOrUpload: 'Click to capture or upload',
+    
+    // AI Verification specific translations
+    aiVerificationResults: 'AI Verification Results',
+    verificationDetails: 'Verification Details',
+    confidence: 'Confidence',
+    reason: 'Reason',
+    description: 'Description',
+    doseRecordedWithWarning: 'Dose Recorded with Warning',
+    doseRecorded: 'Dose Recorded',
+    doseRecordedSuccessfully: 'Your medication dose has been recorded successfully.',
+    aiVerificationUnavailable: 'AI verification was temporarily unavailable, so we used a fallback method.',
+    noPillVisible: 'No pill visible',
+    pillDetected: 'Pill detected',
+    medicationLoggedWithPhoto: 'Your medication has been logged with photo evidence.',
+    pleaseDoubleCheck: 'Please double-check that you\'re taking the correct medication.',
+    verificationIssue: 'Verification issue',
+    doseRecordedButIssue: 'Your dose has been recorded, but there was a verification issue.',
+    but: 'but',
+    thereWasVerificationIssue: 'there was a verification issue',
+    
+    // AI Response pattern translations
+    theImageShows: 'The image shows',
+    smallRoundWhitePill: 'small, round, white pill',
+    thisIsConsistentWith: 'This is consistent with',
+    common: 'common',
+    pills: 'pills',
+    howeverWithoutMarkings: 'However, without markings',
+    furtherInformation: 'further information',
+    confidenceIs: 'confidence is',
+    theImageShowsAHand: 'The image shows a hand',
+    holding: 'holding',
     // Verification details
     cannotVerifyAtThisTime: 'Cannot verify {medication} at this time',
     time: 'Time:',
@@ -711,6 +757,46 @@ const en = {
     generateReminders: 'Generate Reminders',
     noRefillsFound: 'No refills found',
     
+    // Additional keys that are referenced in HTML
+    daysUntilRefill: 'Days Until Refill',
+    daysOfSupplyRemaining: 'Days of Supply Remaining',
+    refillDate: 'Refill Date',
+    refillsRemaining: 'Refills Remaining',
+    calculationComparison: 'Calculation Comparison',
+    recommendation: 'Recommendation',
+    difference: 'Difference',
+    supplyGood: 'supply is good',
+    daysRemaining: 'days remaining',
+    pharmacyEstimate: 'Pharmacy Estimate (Basic)',
+    enhancedCalculation: 'Enhanced Calculation',
+    analysis: 'Analysis',
+    daysUntil: 'Days Until',
+    daysSupply: 'Days Supply',
+    assumption: 'Assumption',
+    dailyConsumption: 'Daily consumption',
+    consumptionRate: 'Consumption Rate',
+    scheduleUsed: 'Schedule Used',
+    method: 'Method',
+    dosesPerDay: 'doses/day',
+    good: 'GOOD',
+    low: 'LOW',
+    overdue: 'OVERDUE',
+    dueSoon: 'DUE SOON',
+    medium: 'MEDIUM',
+    high: 'HIGH',
+    none: 'NONE',
+    days: 'days',
+    percent: '%',
+    pharmacyEstimateAccurate: 'Pharmacy estimate is accurate for this schedule',
+    refillForMedicationDueInDays: 'Refill for {medication} is due in {days} days',
+    refillForMedicationDueTomorrow: 'Refill for {medication} is due tomorrow',
+    urgentRefillDueInDays: 'URGENT: Refill for {medication} is due in {days} days',
+    finalReminderDueTomorrow: 'FINAL REMINDER: Refill for {medication} is due tomorrow',
+    supplyGoodMessage: '{medication} supply is good ({days} days remaining)',
+    confidenceHigh: 'High',
+    confidenceMedium: 'Medium',
+    confidenceLow: 'Low',
+    
     // Backend message translations
     supplyGoodMessage: '{medication} supply is good ({days} days remaining)',
     pharmacyEstimateAccurate: 'Pharmacy estimate is accurate for this schedule',
@@ -726,12 +812,7 @@ const en = {
     
     // Refill reminder specific translations
     refillDue: 'refill due',
-    refillForMedicationDueInDays: 'Refill for {medication} is due in {days} days',
-    refillForMedicationDueTomorrow: 'Refill for {medication} is due tomorrow',
     urgent: 'URGENT',
-    urgentRefillDueInDays: 'URGENT: Refill for {medication} is due in {days} days',
-    finalReminder: 'FINAL REMINDER',
-    finalReminderDueTomorrow: 'FINAL REMINDER: Refill for {medication} is due tomorrow',
     
     // Status labels
     pending: 'pending',
@@ -741,9 +822,15 @@ const en = {
     
     // AI Confidence
     aiConfidence: 'AI Confidence',
-    confidenceHigh: 'High',
-    confidenceMedium: 'Medium',
-    confidenceLow: 'Low'
+    
+    // Additional missing keys
+    dismiss: 'Dismiss',
+    refillCalculationDetails: 'Refill Calculation Details',
+    refillStatus: 'Refill Status',
+    
+    // Refill dashboard specific keys
+    refillCalculationDetailsTitle: 'Refill Calculation Details',
+    refillStatusTitle: 'Refill Status'
   },
 
   // Messages
@@ -786,6 +873,7 @@ const zh = {
     success: '成功',
     warning: '警告',
     info: '信息',
+    note: '注意',
     days: '天',
     units: '单位',
     notSpecified: '未指定'
@@ -1100,6 +1188,17 @@ const zh = {
     notificationsBlocked: '通知被阻止。请在浏览器设置中启用。',
     showingAllDoses: '显示所有剂量（自动更新）',
     completedDosesHidden: '已完成的剂量默认隐藏。点击"显示已服用"查看它们。',
+    // Notification translations
+    notifications: {
+      medicationReminder: '用药提醒',
+      timeToTake: '该服用 {medication} 了！',
+      reminderSystemRestarted: '提醒系统已重启！您将收到用药提醒。',
+      notificationsEnabled: '通知已启用！您现在将收到用药提醒。',
+      permissionDenied: '通知权限被拒绝。请在浏览器设置中启用。',
+      errorEnabling: '启用通知时出错。请重试。',
+      reminderSystemStarted: '提醒系统已启动！您将收到用药提醒。',
+      medicationReminderPrefix: '用药提醒：'
+    },
     // Medication instruction patterns
     medicationInstructions: {
       takeTablet: '口服 {count} 片{plural} {frequency}',
@@ -1189,6 +1288,38 @@ const zh = {
     verifyingMedication: '正在验证药物...',
     backToSelection: '返回选择',
     clickToCaptureOrUpload: '点击拍摄或上传',
+    
+    // AI Verification specific translations
+    aiVerificationResults: 'AI 验证结果',
+    verificationDetails: '验证详情',
+    confidence: '置信度',
+    reason: '原因',
+    description: '描述',
+    doseRecordedWithWarning: '剂量已记录（有警告）',
+    doseRecorded: '剂量已记录',
+    doseRecordedSuccessfully: '您的药物剂量已成功记录。',
+    aiVerificationUnavailable: 'AI 验证暂时不可用，因此我们使用了备用方法。',
+    noPillVisible: '未检测到药丸',
+    pillDetected: '检测到药丸',
+    medicationLoggedWithPhoto: '您的药物已通过照片证据记录。',
+    but: '但是',
+    thereWasVerificationIssue: '存在验证问题',
+    pleaseDoubleCheck: '请仔细检查您是否正在服用正确的药物。',
+    verificationIssue: '验证问题',
+    doseRecordedButIssue: '您的剂量已记录，但存在验证问题。',
+    
+    // AI Response pattern translations
+    theImageShows: '图像显示',
+    smallRoundWhitePill: '小圆形白色药丸',
+    thisIsConsistentWith: '这与',
+    common: '常见的',
+    pills: '药丸',
+    howeverWithoutMarkings: '一致，但没有标记',
+    furtherInformation: '进一步信息',
+    confidenceIs: '置信度是',
+    theImageShowsAHand: '图像显示一只手',
+    holding: '拿着',
+    
     // Verification details
     cannotVerifyAtThisTime: '此时无法验证{medication}',
     time: '时间:',
@@ -1465,6 +1596,9 @@ const zh = {
     supplyRemaining: '剩余供应',
     refillsLeft: '剩余补充',
     nextRefillDate: '下次补充日期',
+    
+    // Success messages
+    refillCreatedSuccess: '补充创建成功！补充提醒已更新。',
     createRefillNow: '立即创建补充',
     cancel: '取消',
     whatHappensWhenCreateRefill: '创建补充时会发生什么：',
@@ -1475,6 +1609,46 @@ const zh = {
     noRefillRemindersFound: '未找到此药物的补充提醒。',
     generateReminders: '生成提醒',
     noRefillsFound: '未找到补充记录',
+    
+    // Additional keys that are referenced in HTML
+    daysUntilRefill: '距离补充天数',
+    daysOfSupplyRemaining: '剩余供应天数',
+    refillDate: '补充日期',
+    refillsRemaining: '剩余补充次数',
+    calculationComparison: '计算比较',
+    recommendation: '建议',
+    difference: '差异',
+    supplyGood: '供应良好',
+    daysRemaining: '天剩余',
+    pharmacyEstimate: '药房估算（基础）',
+    enhancedCalculation: '增强计算',
+    analysis: '分析',
+    daysUntil: '距离天数',
+    daysSupply: '供应天数',
+    assumption: '假设',
+    dailyConsumption: '每日消耗',
+    consumptionRate: '消耗率',
+    scheduleUsed: '使用的时间表',
+    method: '方法',
+    dosesPerDay: '剂/天',
+    good: '良好',
+    low: '不足',
+    overdue: '逾期',
+    dueSoon: '即将到期',
+    medium: '中等',
+    high: '高',
+    none: '无',
+    days: '天',
+    percent: '%',
+    pharmacyEstimateAccurate: '药房估算对此时间表准确',
+    refillForMedicationDueInDays: '{medication} 补充将在 {days} 天后到期',
+    refillForMedicationDueTomorrow: '{medication} 补充将在明天到期',
+    urgentRefillDueInDays: '紧急：{medication} 补充将在 {days} 天后到期',
+    finalReminderDueTomorrow: '最终提醒：{medication} 补充将在明天到期',
+    supplyGoodMessage: '{medication} 供应良好（剩余 {days} 天）',
+    confidenceHigh: '高',
+    confidenceMedium: '中',
+    confidenceLow: '低',
     
     // Backend message translations
     supplyGoodMessage: '{medication} 供应良好（剩余 {days} 天）',
@@ -1491,12 +1665,7 @@ const zh = {
     
     // Refill reminder specific translations
     refillDue: '补充到期',
-    refillForMedicationDueInDays: '{medication} 补充将在 {days} 天后到期',
-    refillForMedicationDueTomorrow: '{medication} 补充将在明天到期',
     urgent: '紧急',
-    urgentRefillDueInDays: '紧急：{medication} 补充将在 {days} 天后到期',
-    finalReminder: '最终提醒',
-    finalReminderDueTomorrow: '最终提醒：{medication} 补充将在明天到期',
     
     // Status labels
     pending: '待处理',
@@ -1506,9 +1675,15 @@ const zh = {
     
     // AI Confidence
     aiConfidence: 'AI 置信度',
-    confidenceHigh: '高',
-    confidenceMedium: '中',
-    confidenceLow: '低'
+    
+    // Additional missing keys
+    dismiss: '忽略',
+    refillCalculationDetails: '补充计算详情',
+    refillStatus: '补充状态',
+    
+    // Refill dashboard specific keys
+    refillCalculationDetailsTitle: '补充计算详情',
+    refillStatusTitle: '补充状态'
   },
 
   // Messages
@@ -1633,7 +1808,6 @@ class I18nService {
     // Apply language immediately
     this.applyLanguage();
     
-    console.log(`Language switched to ${language}`);
   }
 
   /**
@@ -1820,21 +1994,13 @@ class I18nService {
    */
   checkLanguageState() {
     const savedLanguage = localStorage.getItem('userLanguage');
-    console.log('🔍 Language State Check:');
-    console.log('  - Current language:', this.currentLanguage);
-    console.log('  - Saved in localStorage:', savedLanguage);
-    console.log('  - Available translations:', Object.keys(this.translations));
-    console.log('  - Language names:', this.languageNames);
     
     if (this.languageSwitchers) {
-      console.log('  - Language switchers found:', this.languageSwitchers.length);
       this.languageSwitchers.forEach((switcher, index) => {
         if (switcher._select) {
-          console.log(`    - Switcher ${index}: value="${switcher._select.value}", currentLanguage="${this.currentLanguage}"`);
         }
       });
     } else {
-      console.log('  - No language switchers found');
     }
   }
   

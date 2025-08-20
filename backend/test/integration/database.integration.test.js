@@ -30,13 +30,11 @@ describe('Database Integration Tests', () => {
     scheduleService = new PersistentScheduleService(testDb);
     deterministicParser = new DeterministicScheduleParser();
     
-    console.log('✅ Database integration test setup complete');
   });
 
   afterAll(async () => {
     // Teardown test database
     await teardownTestDatabase();
-    console.log('✅ Database integration test teardown complete');
   });
 
   beforeEach(async () => {
@@ -44,9 +42,8 @@ describe('Database Integration Tests', () => {
     await cleanTestDatabase();
     
     // Clear cache before each test
-    scheduleCache.clearAll();
+    scheduleCache.clear();
     
-    console.log('✅ Test database cleaned and cache cleared');
   });
 
   describe('Medication CRUD Operations', () => {
@@ -577,7 +574,7 @@ describe('Database Integration Tests', () => {
       await createTestMedication(testUser.id);
 
       // Manually corrupt cache
-      scheduleCache.clearAll();
+      scheduleCache.clear();
 
       // Try to generate schedule - should recreate from database
       const schedule = await scheduleService.getOrCreatePersistentSchedule(testUser.id, '2024-01-15');
@@ -619,8 +616,6 @@ describe('Database Integration Tests', () => {
       const scheduleTime = Date.now() - scheduleStartTime;
 
       expect(schedule).toBeDefined();
-      console.log(`Created ${numMedications} medications in ${creationTime}ms`);
-      console.log(`Generated schedule in ${scheduleTime}ms`);
     });
 
     it('should handle multiple users efficiently', async () => {
@@ -656,7 +651,6 @@ describe('Database Integration Tests', () => {
         expect(schedule).toBeDefined();
       });
 
-      console.log(`Generated schedules for ${numUsers} users with ${medsPerUser} medications each in ${totalTime}ms`);
     });
   });
 });

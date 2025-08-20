@@ -21,6 +21,61 @@
             }
         }
     </script>
+    <style>
+        
+        #verificationSection, #medicationList {
+            transition: all 0.3s ease-out;
+        }
+        
+        
+        .transition-container {
+            min-height: 400px; 
+        }
+        
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.3s ease-out;
+        }
+        
+        
+        #loadingState {
+            backdrop-filter: blur(2px);
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease-out;
+        }
+        
+        
+        .content-container {
+            min-height: 200px;
+            position: relative;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -56,7 +111,7 @@
         </div>
 
         <!-- Medication Selection -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 content-container">
             <h3 class="text-lg font-semibold text-gray-900 mb-4" data-i18n="actions.selectMedicationToVerify">Select Medication to Verify</h3>
             <div id="medicationList" class="space-y-3">
                 <!-- Medications will be loaded here -->
@@ -64,7 +119,7 @@
         </div>
 
         <!-- Verification Section -->
-        <div id="verificationSection" class="hidden">
+        <div id="verificationSection" class="hidden content-container">
             <!-- Selected Medication Info -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
                 <div class="flex items-center space-x-4">
@@ -199,8 +254,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2" data-i18n="actions.medicationTaken">Medication Taken!</h3>
-                <p class="text-gray-600 mb-6" data-i18n="actions.medicationRecordedSuccessfully">Your medication has been recorded successfully.</p>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2" id="successModalTitle">AI Verification Results</h3>
+                <p class="text-gray-600 mb-6" id="successModalMessage">Verification details will appear here.</p>
                 <div class="flex space-x-4">
                     <button onclick="closeSuccessModal()" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
                         <span data-i18n="actions.continue">Continue</span>
@@ -259,64 +314,79 @@
     <!-- Add bottom padding to account for fixed navigation -->
     <div class="h-20"></div>
 
+    <!-- Load API utilities first -->
+    <script type="module" src="api-utils.js"></script>
+
     <script>
         let selectedMedication = null;
         let capturedImageFile = null;
 
-        // Initialize the page
+        
+        function ensureI18nLoaded() {
+            if (!window.i18n) {
+                setTimeout(ensureI18nLoaded, 100);
+                return;
+            }
+            
+            
+            window.i18n.applyLanguage();
+        }
+        
+        
         document.addEventListener('DOMContentLoaded', function() {
             
-            // Listen for language changes and refresh content
+            
+            ensureI18nLoaded();
+            
+            
             if (window.i18n) {
                 window.addEventListener('languageChanged', function() {
-                    console.log('🔄 Language changed on verify page, refreshing content...');
                     
-                    // Refresh static HTML content with data-i18n attributes
+                    
                     if (window.i18n && typeof window.i18n.updatePage === 'function') {
                         window.i18n.updatePage();
                     } else {
-                        // Manual fallback: refresh static content
+                        
                         refreshStaticContent();
                     }
                     
-                    // Refresh any dynamic content that might need translation updates
-                    // Only call updateVerificationStatus if it exists and the verification section is visible
+                    
+                    refreshOpenModals();
+                    
+                    
+                    
                     if (typeof updateVerificationStatus === 'function') {
                         const verificationSection = document.getElementById('verificationSection');
                         if (verificationSection && !verificationSection.classList.contains('hidden')) {
                             try {
                                 updateVerificationStatus();
                             } catch (error) {
-                                console.log('⚠️ updateVerificationStatus failed:', error.message);
                             }
                         }
                     }
                     
-                    // If there's an eligibility warning showing, refresh it
+                    
                     const medicationList = document.getElementById('medicationList');
                     if (medicationList && (medicationList.innerHTML.includes('Cannot verify') || medicationList.innerHTML.includes('此时无法验证'))) {
-                        console.log('🔄 Refreshing eligibility warning with new language...');
-                        // Use the direct refresh function instead of re-triggering the API call
+                        
                         refreshEligibilityWarning();
                     } else {
-                        console.log('ℹ️ No eligibility warning found to refresh');
                     }
                     
-                    // Refresh medication instructions in the medication list
+                    
                     refreshMedicationInstructions();
                 });
                 
-                // Also check if language has changed since page load and refresh if needed
+                
                 const currentLang = window.i18n.getCurrentLanguage();
                 const savedLang = localStorage.getItem('language') || 'en';
                 if (currentLang !== savedLang) {
-                    console.log('🔄 Language preference changed, refreshing content...');
                     setTimeout(() => {
-                        // Refresh static content
+
                         if (typeof refreshStaticContent === 'function') {
                             refreshStaticContent();
                         }
-                        // Refresh dynamic content
+                        
                         if (typeof refreshEligibilityWarning === 'function') {
                             refreshEligibilityWarning();
                         }
@@ -327,47 +397,30 @@
                 }
             }
             
-            console.log('🚀 Verification page loaded, checking authentication...');
-            console.log('🔍 Current authManager state:', {
-                exists: !!window.authManager,
-                currentUser: window.authManager?.currentUser,
-                isAuthenticated: window.authManager?.isAuthenticated?.()
-            });
             
-            // Check if user is already authenticated
             if (window.authManager && window.authManager.isAuthenticated && window.authManager.isAuthenticated()) {
-                console.log('✅ User already authenticated, loading medications immediately...');
                 loadMedications();
                 setupEventListeners();
                 return;
             }
             
-            // Show initial loading state
+            
             showLoading();
             
-            // Wait for authentication to be ready
+            
             let authCheckAttempts = 0;
-            const maxAuthAttempts = 50; // 5 seconds max wait
+            const maxAuthAttempts = 50; 
             
             const checkAuth = () => {
                 authCheckAttempts++;
                 
                 if (window.authManager) {
                     if (window.authManager.currentUser !== undefined) {
-                        console.log('✅ Authentication ready, loading medications...');
                         hideLoading();
                         loadMedications();
                         setupEventListeners();
-                        
-                        // Test that functions are accessible
-                        console.log('Function availability check:', {
-                            backToSelection: typeof window.backToSelection,
-                            showVerificationSection: typeof window.showVerificationSection,
-                            selectMedication: typeof window.selectMedication
-                        });
                         return;
                     } else if (window.authManager.isAuthenticated && window.authManager.isAuthenticated()) {
-                        console.log('✅ User is authenticated, loading medications...');
                         hideLoading();
                         loadMedications();
                         setupEventListeners();
@@ -376,30 +429,28 @@
                 }
                 
                 if (authCheckAttempts >= maxAuthAttempts) {
-                    console.error('❌ Authentication timeout, showing error');
+                    console.error('Authentication timeout, showing error');
                     hideLoading();
                     showErrorState('Authentication timeout. Please refresh the page.');
                     return;
                 }
                 
-                console.log(`⏳ Waiting for authentication... (attempt ${authCheckAttempts}/${maxAuthAttempts})`);
                 setTimeout(checkAuth, 100);
             };
             
             checkAuth();
             
-            // Check for language changes periodically (every 5 seconds)
+            
             setInterval(() => {
                 if (window.i18n) {
                     const currentLang = window.i18n.getCurrentLanguage();
                     const savedLang = localStorage.getItem('language') || 'en';
                     if (currentLang !== savedLang) {
-                        console.log('🔄 Language preference changed, refreshing content...');
-                        // Refresh static content
+                        
                         if (typeof refreshStaticContent === 'function') {
                             refreshStaticContent();
                         }
-                        // Refresh dynamic content
+                        
                         if (typeof refreshEligibilityWarning === 'function') {
                             refreshEligibilityWarning();
                         }
@@ -412,7 +463,7 @@
         });
 
         function setupEventListeners() {
-            // Photo capture
+            
             document.getElementById('captureBtn').addEventListener('click', () => {
                 document.getElementById('fileInput').click();
             });
@@ -426,44 +477,33 @@
             showLoading();
             
             try {
-                console.log('🔍 Loading medications...');
                 
-                // Check if user is authenticated first
+                
                 if (!window.authManager || !window.authManager.isAuthenticated()) {
-                    console.log('❌ User not authenticated');
                     showAuthenticationError();
                     return;
                 }
                 
                 const response = await API.getMedications();
-                console.log('📡 API response status:', response.status);
                 
                 const data = await response.json();
-                console.log('📊 API response data:', data);
                 
-                // Check if response indicates authentication failure
+                
                 if (response.status === 401 || !data.success && data.message && data.message.includes('Authentication')) {
-                    console.error('❌ Authentication required for medication access');
+                    console.error('Authentication required for medication access');
                     showAuthenticationError();
                     return;
                 }
                 
                 if (data.success && data.medications && data.medications.length > 0) {
-                    console.log(`✅ Loaded ${data.medications.length} medications`);
                     displayMedicationList(data.medications);
                 } else {
-                    console.log('ℹ️ No medications found or empty response');
                     showNoMedicationsState();
                 }
             } catch (error) {
-                console.error('❌ Error loading medications:', error);
-                console.error('❌ Error details:', {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack
-                });
+                console.error('Error loading medications:', error);
                 
-                // Check if it's an authentication error
+                
                 if (error.message && error.message.includes('Authentication')) {
                     showAuthenticationError();
                 } else {
@@ -502,82 +542,67 @@
 
         async function selectMedication(medicationId) {
             try {
-                console.log('🔍 Selecting medication:', medicationId);
                 
-                // Check authentication first
+                
                 if (!window.authManager || !window.authManager.isAuthenticated()) {
-                    console.log('❌ User not authenticated');
                     showAuthenticationError();
                     return;
                 }
                 
-                // First check if medication is eligible for verification
-                console.log('🔍 Checking medication eligibility...');
+
                 const eligibilityResponse = await API.checkMedicationEligibility(medicationId);
-                console.log('📡 Eligibility response status:', eligibilityResponse.status);
-                console.log('📡 Eligibility response headers:', eligibilityResponse.headers);
                 
-                // Check if response is JSON before trying to parse
+                
                 const contentType = eligibilityResponse.headers.get('content-type');
-                console.log('📡 Response content-type:', contentType);
                 
                 if (!contentType || !contentType.includes('application/json')) {
-                    console.error('❌ Response is not JSON, getting text content...');
+                    console.error('Response is not JSON, getting text content...');
                     const textContent = await eligibilityResponse.text();
-                    console.error('❌ Response text (first 500 chars):', textContent.substring(0, 500));
+                    console.error('Response text (first 500 chars):', textContent.substring(0, 500));
                     throw new Error(`API returned non-JSON response: ${contentType || 'unknown'}`);
                 }
                 
                 const eligibilityData = await eligibilityResponse.json();
-                console.log('📊 Eligibility data:', eligibilityData);
                 
                 if (!eligibilityData.success) {
-                    console.error('❌ Eligibility check failed:', eligibilityData.message);
+                    console.error('Eligibility check failed:', eligibilityData.message);
                     showError(`Failed to check eligibility: ${eligibilityData.message}`);
                     return;
                 }
 
-                // Get medication details
-                console.log('🔍 Loading medication details...');
+                
                 const response = await API.getMedications();
-                console.log('📡 Medications response status:', response.status);
                 
                 const data = await response.json();
-                console.log('📊 Medications data:', data);
                 
                 if (data.success) {
-                    // Convert medicationId to number for comparison since it might be passed as string from HTML
+                    
                     const numericMedicationId = parseInt(medicationId);
-                    console.log('🔍 Looking for medication with ID:', numericMedicationId);
                     
                     selectedMedication = data.medications.find(med => med.id === numericMedicationId);
-                    console.log('📋 Selected medication:', selectedMedication);
                     
                     if (selectedMedication) {
                         if (eligibilityData.eligible) {
-                            console.log('✅ Medication eligible, showing verification section');
                             showVerificationSection();
                         } else {
-                            console.log('⚠️ Medication not eligible, showing warning');
                             showEligibilityWarning(eligibilityData);
                         }
                     } else {
-                        console.error('❌ Medication not found in list');
+                        console.error('Medication not found in list');
                         showError('Selected medication not found in the list. Please try refreshing the page.');
                     }
                 } else {
-                    console.error('❌ Failed to load medications:', data.message);
+                    console.error('Failed to load medications:', data.message);
                     showError('Failed to load medication details');
                 }
             } catch (error) {
-                console.error('❌ Error selecting medication:', error);
-                console.error('❌ Error details:', {
+                console.error('Error selecting medication:', error);
+                console.error('Error details:', {
                     name: error.name,
                     message: error.message,
                     stack: error.stack
                 });
                 
-                // Check if it's an authentication error
                 if (error.message && error.message.includes('Authentication')) {
                     showAuthenticationError();
                 } else {
@@ -589,12 +614,10 @@
         function showEligibilityWarning(eligibilityData) {
             const container = document.getElementById('medicationList');
             
-            // Get translations with fallbacks
             const getText = (key, params = {}) => {
                 if (window.i18n) {
                     return window.i18n.t(key, params);
                 }
-                // Fallback to English
                 const fallbacks = {
                     'actions.cannotVerifyAtThisTime': `Cannot verify ${eligibilityData.medication.name} at this time`,
                     'actions.time': 'Time:',
@@ -606,19 +629,15 @@
                 return fallbacks[key] || key;
             };
             
-            // Function to translate dynamic messages from backend
             const translateMessage = (message) => {
                 if (!window.i18n) return message;
                 
                 const lowerMessage = message.toLowerCase();
-                console.log('🔄 Translating message:', message);
                 
-                // Time message patterns - English
                 if (lowerMessage.includes('should be taken at') && lowerMessage.includes('±2 hours')) {
                     const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
                     if (timeMatch) {
                         const translated = window.i18n.t('actions.shouldBeTakenAt', { time: timeMatch[1] });
-                        console.log('✅ Translated time message:', translated);
                         return translated;
                     }
                 }
@@ -627,17 +646,14 @@
                     const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
                     if (timeMatch) {
                         const translated = window.i18n.t('actions.canBeTakenAt', { time: timeMatch[1] });
-                        console.log('✅ Translated time message:', translated);
                         return translated;
                     }
                 }
                 
-                // Time message patterns - Chinese (reverse translation)
                 if (lowerMessage.includes('可在') && lowerMessage.includes('±2小时') && lowerMessage.includes('服用')) {
                     const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
                     if (timeMatch) {
                         const translated = window.i18n.t('actions.canBeTakenAt', { time: timeMatch[1] });
-                        console.log('✅ Reverse translated time message:', translated);
                         return translated;
                     }
                 }
@@ -646,17 +662,14 @@
                     const timeMatch = message.match(/(\d{1,2}:\d{2}:\d{2})/);
                     if (timeMatch) {
                         const translated = window.i18n.t('actions.shouldBeTakenAt', { time: timeMatch[1] });
-                        console.log('✅ Reverse translated time message:', translated);
                         return translated;
                     }
                 }
                 
-                // Frequency message patterns - English
                 if (lowerMessage.includes('can take dose') && lowerMessage.includes('of') && lowerMessage.includes('today')) {
                     const match = message.match(/can take dose (\d+) of (\d+) today/i);
                     if (match) {
                         const translated = window.i18n.t('actions.canTakeDose', { taken: match[1], total: match[2] });
-                        console.log('✅ Translated frequency message:', translated);
                         return translated;
                     }
                 }
@@ -665,17 +678,14 @@
                     const match = message.match(/already taken (\d+) of (\d+) doses today/i);
                     if (match) {
                         const translated = window.i18n.t('actions.alreadyTaken', { taken: match[1], total: match[2] });
-                        console.log('✅ Translated frequency message:', translated);
                         return translated;
                     }
                 }
                 
-                // Frequency message patterns - Chinese (reverse translation)
                 if (lowerMessage.includes('今天可以服用第') && lowerMessage.includes('剂')) {
                     const match = message.match(/(\d+)\/(\d+)/);
                     if (match) {
                         const translated = window.i18n.t('actions.canTakeDose', { taken: match[1], total: match[2] });
-                        console.log('✅ Reverse translated frequency message:', translated);
                         return translated;
                     }
                 }
@@ -684,46 +694,36 @@
                     const match = message.match(/(\d+)\/(\d+)/);
                     if (match) {
                         const translated = window.i18n.t('actions.alreadyTaken', { taken: match[1], total: match[2] });
-                        console.log('✅ Reverse translated frequency message:', translated);
                         return translated;
                     }
                 }
                 
-                // Recent dose message patterns - English
                 if (lowerMessage.includes('last dose was') && lowerMessage.includes('minutes ago')) {
                     const match = message.match(/last dose was (\d+) minutes ago/i);
                     if (match) {
                         const translated = window.i18n.t('actions.lastDoseWas', { minutes: match[1] });
-                        console.log('✅ Translated recent dose message:', translated);
                         return translated;
                     }
                 }
                 
-                // Recent dose message patterns - Chinese (reverse translation)
                 if (lowerMessage.includes('上次剂量是') && lowerMessage.includes('分钟前')) {
                     const match = message.match(/(\d+)/);
                     if (match) {
                         const translated = window.i18n.t('actions.lastDoseWas', { minutes: match[1] });
-                        console.log('✅ Reverse translated recent dose message:', translated);
                         return translated;
                     }
                 }
                 
-                // No previous doses pattern - English
                 if (lowerMessage.includes('no previous doses today')) {
                     const translated = window.i18n.t('actions.noPreviousDosesToday');
-                    console.log('✅ Translated no previous doses message:', translated);
                     return translated;
                 }
                 
-                // No previous doses pattern - Chinese (reverse translation)
                 if (lowerMessage.includes('今天没有之前的剂量')) {
                     const translated = window.i18n.t('actions.noPreviousDosesToday');
-                    console.log('✅ Reverse translated no previous doses message:', translated);
                     return translated;
                 }
                 
-                            console.log('⚠️ No translation pattern found for:', message);
             return message;
         };
             
@@ -785,7 +785,7 @@
                 </div>
             `;
             
-            // Hide the medication list and show warning
+                
             container.innerHTML = warningHtml;
         }
 
@@ -804,54 +804,95 @@
         }
 
         function showVerificationSection() {
-
             
-            // Update selected medication info
+            const verificationSection = document.getElementById('verificationSection');
+            const medicationListContainer = document.getElementById('medicationList');
+            
+            
             document.getElementById('selectedMedName').textContent = selectedMedication.name;
             document.getElementById('selectedMedDosage').textContent = selectedMedication.dosage;
             document.getElementById('selectedMedSchedule').textContent = translateMedicationInstruction(selectedMedication.schedule);
             
-            // Show verification section, hide medication list
-            document.getElementById('verificationSection').classList.remove('hidden');
             
-            // Hide the medication list container (whether it's the original list or warning)
-            const medicationListContainer = document.getElementById('medicationList');
             if (medicationListContainer) {
-                medicationListContainer.style.display = 'none';
+                medicationListContainer.style.opacity = '0';
+                medicationListContainer.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    
+                    medicationListContainer.classList.add('hidden');
+                    
+                    
+                    verificationSection.classList.remove('hidden');
+                    verificationSection.style.opacity = '0';
+                    verificationSection.style.transform = 'translateY(10px)';
+                    
+                    
+                    verificationSection.offsetHeight;
+                    
+                    
+                    verificationSection.style.transition = 'all 0.3s ease-out';
+                    verificationSection.style.opacity = '1';
+                    verificationSection.style.transform = 'translateY(0)';
+                    
+                    
+                    setTimeout(() => {
+                        resetPhotoState();
+                    }, 300);
+                }, 200);
+            } else {
+                
+                verificationSection.classList.remove('hidden');
+                resetPhotoState();
             }
-            
-            // Reset photo state
-            resetPhotoState();
         }
 
         function backToSelection() {
-
-            
-            // Hide verification section
-            document.getElementById('verificationSection').classList.add('hidden');
-            
-            // Show the medication list container
+            const verificationSection = document.getElementById('verificationSection');
             const medicationListContainer = document.getElementById('medicationList');
-            if (medicationListContainer) {
-                medicationListContainer.style.display = 'block';
-            }
             
-            // Reload the medication list
-            loadMedications();
             
-            // Reset state
-            selectedMedication = null;
-            capturedImageFile = null;
+            verificationSection.style.transition = 'all 0.3s ease-out';
+            verificationSection.style.opacity = '0';
+            verificationSection.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                
+                verificationSection.classList.add('hidden');
+                
+                
+                if (medicationListContainer) {
+                    medicationListContainer.classList.remove('hidden');
+                    medicationListContainer.style.opacity = '0';
+                    medicationListContainer.style.transform = 'translateY(10px)';
+                    
+                    
+                    medicationListContainer.offsetHeight;
+                    
+                    
+                    medicationListContainer.style.transition = 'all 0.3s ease-out';
+                    medicationListContainer.style.opacity = '1';
+                    medicationListContainer.style.transform = 'translateY(0)';
+                }
+                
+
+                loadMedications();
+                
+                
+                selectedMedication = null;
+                capturedImageFile = null;
+                
+                updateVerificationStatus(0, false); 
+                updateVerificationStatus(1, false); 
+                updateVerificationStatus(2, false); 
+            }, 300);
         }
 
-        // Function to translate medication instructions (schedule text)
         function translateMedicationInstruction(instruction) {
             if (!window.i18n) return instruction;
             
             const lowerInstruction = instruction.toLowerCase();
-            console.log('🔄 Translating medication instruction:', instruction);
             
-            // Common tablet patterns - English
             if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
                 const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
                 if (match) {
@@ -859,7 +900,6 @@
                     const plural = count > 1 ? 's' : '';
                     const frequency = match[3];
                     
-                    // Translate the frequency part
                     let translatedFrequency = frequency;
                     if (frequency.includes('every day')) {
                         translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily');
@@ -874,12 +914,10 @@
                         plural: plural, 
                         frequency: translatedFrequency 
                     });
-                    console.log('✅ Translated tablet instruction:', translated);
                     return translated;
                 }
             }
             
-            // Common tablet patterns - Chinese (reverse translation)
             if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
                 const match = instruction.match(/服用(\d+)片(.+)/);
                 if (match) {
@@ -891,15 +929,12 @@
                         plural: plural, 
                         frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily')
                     });
-                    console.log('✅ Reverse translated tablet instruction:', translated);
                     return translated;
                 }
             }
             
-            // Generic fallback - try to translate common words
             let translatedInstruction = instruction;
             
-            // Replace common English words with translations
             if (lowerInstruction.includes('take')) {
                 translatedInstruction = translatedInstruction.replace(/take/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('{')[0].trim());
             }
@@ -913,11 +948,9 @@
                 translatedInstruction = translatedInstruction.replace(/every day/gi, window.i18n.t('schedule.medicationInstructions.frequency.daily'));
             }
             
-            console.log('✅ Translated medication instruction:', translatedInstruction);
             return translatedInstruction;
         }
 
-        // Make functions globally accessible
         window.backToSelection = backToSelection;
         window.showVerificationSection = showVerificationSection;
         window.selectMedication = selectMedication;
@@ -929,7 +962,7 @@
             if (file && file.type.startsWith('image/')) {
                 capturedImageFile = file;
                 displayImage(file);
-                updateVerificationStatus(0, true); // Photo captured
+                updateVerificationStatus(0, true); 
                 enableVerifyButton();
             }
         }
@@ -957,21 +990,21 @@
             document.getElementById('captureBtn').classList.remove('hidden');
             document.getElementById('fileInput').value = '';
             capturedImageFile = null;
-            updateVerificationStatus(0, false);
+            
+            updateVerificationStatus(0, false); 
+            updateVerificationStatus(1, false); 
+            updateVerificationStatus(2, false); 
+            
             disableVerifyButton();
         }
 
         function updateVerificationStatus(step, completed) {
-            // Check if verification status elements exist
             const statusItems = document.querySelectorAll('#verificationStatus > div');
             if (!statusItems || statusItems.length === 0) {
-                console.log('⚠️ Verification status elements not found, skipping update');
                 return;
             }
             
-            // Check if the step index is valid
             if (step < 0 || step >= statusItems.length) {
-                console.log(`⚠️ Invalid step index: ${step}, max: ${statusItems.length - 1}`);
                 return;
             }
             
@@ -981,7 +1014,6 @@
                 const text = currentStep.querySelector('span');
                 
                 if (!currentStep || !icons || !text) {
-                    console.log('⚠️ Required elements not found in verification step');
                     return;
                 }
                 
@@ -997,7 +1029,6 @@
                     text.className = 'text-sm text-gray-600';
                 }
             } catch (error) {
-                console.log('⚠️ Error updating verification status:', error.message);
             }
         }
 
@@ -1018,7 +1049,7 @@
                 if (window.i18n) {
                     return window.i18n.t(key);
                 }
-                // Fallback to English
+
                 const fallbacks = {
                     'actions.noMedicationsFound': 'No medications found',
                     'actions.addYourFirstMedication': 'Add your first medication to get started',
@@ -1046,7 +1077,7 @@
                 if (window.i18n) {
                     return window.i18n.t(key);
                 }
-                // Fallback to English
+                
                 const fallbacks = {
                     'actions.authenticationRequired': 'Authentication Required',
                     'actions.needToSignIn': 'You need to sign in to verify medications',
@@ -1074,7 +1105,7 @@
                 if (window.i18n) {
                     return window.i18n.t(key);
                 }
-                // Fallback to English
+                
                 const fallbacks = {
                     'actions.errorLoadingMedications': 'Error Loading Medications',
                     'actions.tryAgain': 'Try Again'
@@ -1096,13 +1127,12 @@
             `;
         }
 
-        // Function to refresh static content with data-i18n attributes
+        
         function refreshStaticContent() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing static content...');
             
-            // Get all elements with data-i18n attributes
+            
             const elements = document.querySelectorAll('[data-i18n]');
             
             elements.forEach(element => {
@@ -1115,58 +1145,52 @@
                 }
             });
             
-            console.log(`✅ Refreshed ${elements.length} static elements`);
         }
 
-        // Function to refresh eligibility warning content
+        
         function refreshEligibilityWarning() {
             if (!window.i18n || !selectedMedication) return;
             
-            console.log('🔄 Refreshing eligibility warning content...');
             
-            // Get the current eligibility data from the DOM
+            
             const medicationList = document.getElementById('medicationList');
             if (!medicationList) return;
             
-            // Check if there's an eligibility warning showing
+            
             if (medicationList.innerHTML.includes('Cannot verify') || medicationList.innerHTML.includes('此时无法验证')) {
-                // Find all the red text spans that contain the actual messages
+                
                 const redTextSpans = medicationList.querySelectorAll('.text-red-600');
-                console.log('🔍 Found red text spans:', redTextSpans.length);
                 
                 let timeMessage = '';
                 let frequencyMessage = '';
                 let recentDoseMessage = '';
                 
-                // Extract messages from the spans
+                
                 redTextSpans.forEach((span, index) => {
                     const text = span.textContent.trim();
-                    console.log(`📝 Span ${index}: "${text}"`);
                     
-                    // Skip empty spans and find the first non-empty span for each message type
+                    
                     if (text) {
                         if (!timeMessage) {
                             timeMessage = text;
-                            console.log(`⏰ Set time message: "${text}"`);
                         } else if (!frequencyMessage) {
                             frequencyMessage = text;
-                            console.log(`📊 Set frequency message: "${text}"`);
                         } else if (!recentDoseMessage) {
                             recentDoseMessage = text;
-                            console.log(`💊 Set recent dose message: "${text}"`);
                         }
                     }
                 });
                 
-                console.log('📋 Extracted messages:', {
+                
+                const mockEligibilityData = {
                     time: timeMessage,
                     frequency: frequencyMessage,
                     recentDose: recentDoseMessage
-                });
+                };
                 
-                // Only proceed if we have at least some meaningful content
+                
                 if (timeMessage || frequencyMessage || recentDoseMessage) {
-                    // Create mock eligibility data to regenerate the warning
+                    
                     const mockEligibilityData = {
                         medication: selectedMedication,
                         timeCheck: { message: timeMessage || 'No time information available' },
@@ -1174,44 +1198,39 @@
                         recentDoseCheck: { message: recentDoseMessage || 'No recent dose information available' }
                     };
                     
-                    // Regenerate the warning with new language
+                    
                     showEligibilityWarning(mockEligibilityData);
-                    console.log('✅ Eligibility warning refreshed with new language');
                 } else {
-                    console.log('⚠️ No message content found, cannot refresh warning');
+                    
+            
                 }
             }
         }
 
-        // Function to refresh medication instructions when language changes
+        
         function refreshMedicationInstructions() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing medication instructions...');
             
-            // Refresh instructions in the medication list
             const medicationList = document.getElementById('medicationList');
             if (medicationList) {
-                // Find all medication instruction paragraphs
+                
                 const instructionElements = medicationList.querySelectorAll('p.text-xs.text-gray-500');
-                console.log(`🔍 Found ${instructionElements.length} instruction elements to refresh`);
                 
                 instructionElements.forEach((element, index) => {
                     const originalText = element.getAttribute('data-original-instruction');
                     if (originalText) {
                         const translatedInstruction = translateMedicationInstruction(originalText);
                         element.textContent = translatedInstruction;
-                        console.log(`✅ Refreshed instruction ${index}: "${translatedInstruction}"`);
                     }
                 });
             }
             
-            // Refresh instruction in the verification section if visible
+            
             const selectedMedSchedule = document.getElementById('selectedMedSchedule');
             if (selectedMedSchedule && selectedMedication) {
                 const translatedInstruction = translateMedicationInstruction(selectedMedication.schedule);
                 selectedMedSchedule.textContent = translatedInstruction;
-                console.log('✅ Refreshed selected medication instruction:', translatedInstruction);
             }
         }
 
@@ -1221,14 +1240,12 @@
             showLoading();
             
             try {
-                console.log('🔍 Recording dose for medication:', selectedMedication);
-                console.log('📸 Image file:', capturedImageFile);
                 
-                // Upload photo and record dose with Gemini fallback
+                
                 const formData = new FormData();
                 formData.append('photo', capturedImageFile);
                 formData.append('medicationId', selectedMedication.id);
-                // Use local date to avoid timezone issues
+                
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1238,49 +1255,51 @@
                 formData.append('timeSlot', 'manual');
                 formData.append('taken', 'true');
                 
-                console.log('📤 Sending dose data:', {
+                
+                const requestData = {
                     medicationId: selectedMedication.id,
                     date: dateString,
                     timeSlot: 'manual',
                     taken: 'true'
-                });
+                };
+                
+                
+                const currentLanguage = window.i18n && window.i18n.getCurrentLanguage ? window.i18n.getCurrentLanguage() : 'en';
                 
                 const response = await fetch(`${window.API_BASE}/record-dose-with-photo`, {
                     method: 'POST',
                     credentials: 'include',
+                    headers: {
+                        'Accept-Language': currentLanguage === 'zh' ? 'zh-CN,zh;q=0.9,en;q=0.8' : 'en-US,en;q=0.9'
+                    },
                     body: formData
                 });
                 
-                console.log('📡 Dose recording response status:', response.status);
-                console.log('📡 Dose recording response headers:', response.headers);
-                
                 const result = await response.json();
-                console.log('📊 Dose recording result:', result);
                 
                 if (result.success) {
-                    updateVerificationStatus(1, true); // Photo uploaded
                     
-                    // Show verification result
+                    updateVerificationStatus(0, true); 
+                    
+                    
                     const verification = result.verification;
                     if (verification) {
                         if (verification.isCorrectPill) {
-                            updateVerificationStatus(1, true); // Pill verified
-                            updateVerificationStatus(2, true); // Dose recorded
+                            updateVerificationStatus(1, true); 
                             
-                            // Show success with verification details
+                            
                             showSuccessModalWithVerification(verification);
                         } else {
-                            // Show warning but still record dose
-                            updateVerificationStatus(2, true); // Dose recorded
+                            
                             showWarningModal(verification);
                         }
                     } else {
-                        updateVerificationStatus(2, true); // Dose recorded
+                    
                         showSuccessModal();
                     }
                     
                     setTimeout(() => {
-                        // Add a note about checking the schedule
+                        
                         const successElement = document.querySelector('.bg-green-50');
                         if (successElement) {
                             const noteElement = document.createElement('div');
@@ -1310,28 +1329,41 @@
 
         function showSuccessModalWithVerification(verification) {
             const modal = document.getElementById('successModal');
-            const title = modal.querySelector('h3');
-            const message = modal.querySelector('p');
+            const title = document.getElementById('successModalTitle');
+            const message = document.getElementById('successModalMessage');
             
-            title.textContent = 'Medication Verified!';
+            
+            title.textContent = window.i18n ? window.i18n.t('actions.aiVerificationResults') : 'AI Verification Results';
+            
+            
             message.innerHTML = `
-                Your medication has been verified and recorded successfully.<br><br>
-                <strong>Verification Details:</strong><br>
-                • Confidence: ${verification.confidence}<br>
+                <strong>${window.i18n ? window.i18n.t('actions.verificationDetails') : 'Verification Details'}:</strong><br>
+                • ${window.i18n ? window.i18n.t('actions.confidence') : 'Confidence'}: ${verification.confidence}<br>
                 • ${verification.reason}<br>
                 • ${verification.description}
             `;
             
+            
             modal.classList.remove('hidden');
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+            
+            
+            modal.offsetHeight;
+            
+            
+            modal.style.transition = 'all 0.2s ease-out';
+            modal.style.opacity = '1';
+            modal.style.transform = 'scale(1)';
         }
 
         function showWarningModal(verification) {
             const modal = document.getElementById('successModal');
             const icon = modal.querySelector('.w-16.h-16');
-            const title = modal.querySelector('h3');
-            const message = modal.querySelector('p');
+            const title = document.getElementById('successModalTitle');
+            const message = document.getElementById('successModalMessage');
             
-            // Change to warning style
+            
             icon.className = 'w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4';
             icon.innerHTML = `
                 <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1339,34 +1371,34 @@
                 </svg>
             `;
             
-            title.textContent = 'Dose Recorded with Warning';
+            title.textContent = window.i18n ? window.i18n.t('actions.doseRecordedWithWarning') : 'Dose Recorded with Warning';
             title.className = 'text-xl font-semibold text-gray-900 mb-2';
             
-            // Handle different warning scenarios
+            
             let warningMessage = '';
             if (verification.reason && verification.reason.includes('AI verification unavailable')) {
                 warningMessage = `
-                    Your dose has been recorded successfully!<br><br>
-                    <strong>Note:</strong> AI verification was temporarily unavailable, so we used a fallback method.<br><br>
-                    <em>Your medication has been logged with photo evidence.</em>
+                    ${window.i18n ? window.i18n.t('actions.doseRecordedSuccessfully') : 'Your dose has been recorded successfully'}!<br><br>
+                    <strong>${window.i18n ? window.i18n.t('common.note') : 'Note'}:</strong> ${window.i18n ? window.i18n.t('actions.aiVerificationUnavailable') : 'AI verification was temporarily unavailable, so we used a fallback method.'}<br><br>
+                    <em>${window.i18n ? window.i18n.t('actions.medicationLoggedWithPhoto') : 'Your medication has been logged with photo evidence.'}</em>
                 `;
             } else if (verification.reason && verification.reason.includes('No pill visible')) {
                 warningMessage = `
-                    Your dose has been recorded, but we couldn't detect a pill in the image.<br><br>
-                    <strong>Verification Details:</strong><br>
-                    • Confidence: ${verification.confidence}<br>
+                    ${window.i18n ? window.i18n.t('actions.doseRecordedSuccessfully') : 'Your dose has been recorded successfully'}, ${window.i18n ? window.i18n.t('actions.but') : 'but'} ${window.i18n ? window.i18n.t('actions.noPillVisible') : 'we couldn\'t detect a pill in the image'}.<br><br>
+                    <strong>${window.i18n ? window.i18n.t('actions.verificationDetails') : 'Verification Details'}:</strong><br>
+                    • ${window.i18n ? window.i18n.t('actions.confidence') : 'Confidence'}: ${verification.confidence}<br>
                     • ${verification.reason}<br>
                     • ${verification.description}<br><br>
-                    <em>Please double-check that you're taking the correct medication.</em>
+                    <em>${window.i18n ? window.i18n.t('actions.pleaseDoubleCheck') : 'Please double-check that you\'re taking the correct medication.'}</em>
                 `;
             } else {
                 warningMessage = `
-                    Your dose has been recorded, but there was a verification issue.<br><br>
-                    <strong>Verification Details:</strong><br>
-                    • Confidence: ${verification.confidence}<br>
+                    ${window.i18n ? window.i18n.t('actions.doseRecordedSuccessfully') : 'Your dose has been recorded successfully'}, ${window.i18n ? window.i18n.t('actions.but') : 'but'} ${window.i18n ? window.i18n.t('actions.thereWasVerificationIssue') : 'there was a verification issue'}.<br><br>
+                    <strong>${window.i18n ? window.i18n.t('actions.verificationDetails') : 'Verification Details'}:</strong><br>
+                    • ${window.i18n ? window.i18n.t('actions.confidence') : 'Confidence'}: ${verification.confidence}<br>
                     • ${verification.reason}<br>
                     • ${verification.description}<br><br>
-                    <em>Please double-check that you're taking the correct medication.</em>
+                    <em>${window.i18n ? window.i18n.t('actions.pleaseDoubleCheck') : 'Please double-check that you\'re taking the correct medication.'}</em>
                 `;
             }
             
@@ -1375,26 +1407,95 @@
         }
 
         function showSuccessModal() {
-            document.getElementById('successModal').classList.remove('hidden');
+            
+            
+            const modal = document.getElementById('successModal');
+            const title = document.getElementById('successModalTitle');
+            const message = document.getElementById('successModalMessage');
+            
+            title.textContent = window.i18n ? window.i18n.t('actions.doseRecorded') : 'Dose Recorded';
+            message.textContent = window.i18n ? window.i18n.t('actions.doseRecordedSuccessfully') : 'Your medication dose has been recorded successfully.';
+            
+            modal.classList.remove('hidden');
         }
 
         function closeSuccessModal() {
-            document.getElementById('successModal').classList.add('hidden');
+            const modal = document.getElementById('successModal');
+            
+            
+            modal.style.transition = 'all 0.2s ease-in';
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                
+                updateVerificationStatus(2, true); 
+                
+                modal.classList.add('hidden');
+                
+                
+                modal.style.opacity = '';
+                modal.style.transform = '';
+                modal.style.transition = '';
+            }, 200);
         }
 
         function showLoading() {
-            document.getElementById('loadingState').classList.remove('hidden');
+            const loadingState = document.getElementById('loadingState');
+            loadingState.classList.remove('hidden');
+            
+            
+            loadingState.style.opacity = '0';
+            loadingState.style.transition = 'opacity 0.2s ease-out';
+            
+
+            loadingState.offsetHeight;
+            
+            loadingState.style.opacity = '1';
         }
 
         function hideLoading() {
-            document.getElementById('loadingState').classList.add('hidden');
+            const loadingState = document.getElementById('loadingState');
+            
+            
+            loadingState.style.transition = 'opacity 0.2s ease-out';
+            loadingState.style.opacity = '0';
+            
+            setTimeout(() => {
+                loadingState.classList.add('hidden');
+                loadingState.style.opacity = '';
+                loadingState.style.transition = '';
+            }, 200);
         }
+        
+        
+        function refreshOpenModals() {
+            const successModal = document.getElementById('successModal');
+            if (successModal && !successModal.classList.contains('hidden')) {
+                
+                const title = document.getElementById('successModalTitle');
+                const message = document.getElementById('successModalMessage');
+                
+
+                if (title.textContent.includes('AI Verification Results') || title.textContent.includes('AI 验证结果')) {
+                    
+                    title.textContent = window.i18n ? window.i18n.t('actions.aiVerificationResults') : 'AI Verification Results';
+                    
+                } else if (title.textContent.includes('Dose Recorded') || title.textContent.includes('剂量已记录')) {
+                    
+                    title.textContent = window.i18n ? window.i18n.t('actions.doseRecorded') : 'Dose Recorded';
+                    message.textContent = window.i18n ? window.i18n.t('actions.doseRecordedSuccessfully') : 'Your medication dose has been recorded successfully.';
+                }
+            }
+        }
+        
+        
     </script>
 
     <!-- External scripts -->
-                <script src="api-utils.js"></script>
-    <script src="auth.js"></script>
-    <script src="auth-guard.js"></script>
+    <script type="module" src="api-utils.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="auth-guard.js"></script>
     <!-- Internationalization Script -->
     <script type="module" src="i18n.js"></script>
 </body>

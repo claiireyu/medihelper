@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
-.env
+backend/.env
 .env.local
 .env.development.local
 .env.test.local
@@ -101,3 +101,9 @@ Thumbs.db
 
 # Test files
 test.env
+
+
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/coverage/
+frontend/dist/

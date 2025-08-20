@@ -11,10 +11,12 @@
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
     "test:unit": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.unit.config.js",
-    "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration",
-    "test:integration:coverage": "node --experimental-vm-modules node_modules/.bin/jest test/integration --coverage",
+    "test:integration": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.integration.config.js",
+    "test:integration:coverage": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.integration.config.js --coverage",
     "test:database": "node --experimental-vm-modules node_modules/.bin/jest test/integration/database.integration.test.js",
-    "test:api": "node --experimental-vm-modules node_modules/.bin/jest test/integration/api.integration.test.js"
+    "test:api": "node --experimental-vm-modules node_modules/.bin/jest test/integration/api.integration.test.js",
+    "test:new-api": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.integration.config.js newApiEndpoints.integration.test.js",
+    "test:new-api:coverage": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.integration.config.js newApiEndpoints.integration.test.js --coverage"
   },
   "keywords": [
     "medication",

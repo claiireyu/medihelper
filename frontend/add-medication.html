@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Medication - MediHelper</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="i18n.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -22,6 +21,82 @@
             }
         }
     </script>
+    <style>
+        /* Smooth transitions for add medication page */
+        * {
+            transition: all 0.2s ease-out;
+        }
+        
+        /* Page transitions */
+        .page-transition {
+            animation: pageFadeIn 0.4s ease-out;
+        }
+        
+        /* Tab transitions */
+        .tab-button {
+            transition: all 0.3s ease-out;
+            position: relative;
+        }
+        
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #3b82f6;
+            transition: width 0.3s ease-out;
+        }
+        
+        .tab-button.active::after {
+            width: 100%;
+        }
+        
+        /* Mode switching transitions */
+        .mode-button {
+            transition: all 0.3s ease-out;
+            transform: scale(1);
+        }
+        
+        .mode-button:hover {
+            transform: scale(1.02);
+        }
+        
+        .mode-button.active {
+            transform: scale(1.05);
+        }
+        
+        /* Form transitions */
+        .form-section {
+            transition: all 0.4s ease-out;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .form-section.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        /* Loading overlay improvements */
+        #pageLoadingOverlay {
+            backdrop-filter: blur(2px);
+            background-color: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease-out;
+        }
+        
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Loading Overlay -->
@@ -61,7 +136,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
         <!-- Mode Selection -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
             <div class="flex space-x-4">
@@ -347,14 +422,12 @@
     <script>
         let currentImageFile = null;
         let extractedInfo = null;
-        let currentMode = 'new'; // 'new' or 'refill'
+        let currentMode = 'new';
         let selectedMedicationForRefill = null;
 
-        // Mode switching functionality
         function switchMode(mode) {
             currentMode = mode;
             
-            // Update mode button styles
             document.querySelectorAll('.mode-button').forEach(button => {
                 button.classList.remove('border-primary-500', 'text-primary-600');
                 button.classList.add('border-transparent', 'text-gray-500');
@@ -373,7 +446,6 @@
             }
         }
 
-        // Load medications for refill selection
         async function loadMedicationsForRefill() {
             try {
                 const response = await fetch(`${API_BASE}/medications`, {
@@ -400,7 +472,6 @@
             }
         }
 
-        // Display medications for refill selection
         function displayMedicationsForRefill(medications) {
             const container = document.getElementById('medicationList');
             
@@ -427,21 +498,17 @@
             container.innerHTML = html;
         }
 
-        // Select medication for refill
         function selectMedicationForRefill(medicationId) {
-            // Find the selected medication
             fetch(`${API_BASE}/medications`, {
                 credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Convert medicationId to number for comparison since it might be passed as string from HTML
                         const numericMedicationId = parseInt(medicationId);
                         selectedMedicationForRefill = data.medications.find(med => med.id === numericMedicationId);
                         
                         if (selectedMedicationForRefill) {
-                            // Pre-fill the form with the selected medication's data
                             document.getElementById('medicationName').value = selectedMedicationForRefill.name;
                             document.getElementById('dosage').value = selectedMedicationForRefill.dosage || '';
                             document.getElementById('schedule').value = selectedMedicationForRefill.schedule || '';
@@ -450,12 +517,9 @@
                                 document.getElementById('specificTime').value = selectedMedicationForRefill.specific_time;
                             }
                             
-                            // For refills, go straight to preview/save mode since photo is optional
                             switchTab('preview');
                             
-                            // Update the save button text
                             document.getElementById('saveBtn').innerHTML = '💾 <span data-i18n="addMedication.saveRefill">Save Refill</span>';
-                            // Refresh the translation
                             if (window.i18n) {
                                 const saveBtn = document.getElementById('saveBtn');
                                 const span = saveBtn.querySelector('span');
@@ -471,20 +535,16 @@
                 });
         }
 
-        // Tab switching functionality
         function switchTab(tabName) {
-            // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
             
-            // Remove active class from all tab buttons
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active', 'border-primary-500', 'text-primary-600');
                 button.classList.add('border-transparent', 'text-gray-500');
             });
             
-            // Show selected tab content
             if (tabName === 'upload') {
                 document.getElementById('uploadContent').classList.remove('hidden');
                 document.getElementById('uploadTab').classList.add('active', 'border-primary-500', 'text-primary-600');
@@ -496,11 +556,9 @@
             }
         }
 
-        // File input handling
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
         document.getElementById('dragDropArea').addEventListener('click', () => document.getElementById('fileInput').click());
         
-        // Drag and drop functionality
         document.getElementById('dragDropArea').addEventListener('dragover', (e) => {
             e.preventDefault();
             e.currentTarget.classList.add('border-primary-400', 'bg-primary-50');
@@ -532,29 +590,23 @@
         function displayImage(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Show in camera preview
                 document.getElementById('capturedImage').src = e.target.result;
                 document.getElementById('capturedImage').classList.remove('hidden');
                 document.getElementById('cameraPreview').classList.add('hidden');
                 
-                // Show retake button
                 document.getElementById('retakeBtn').classList.remove('hidden');
                 document.getElementById('captureBtn').classList.add('hidden');
                 
-                // Update preview image
                 document.getElementById('previewImage').src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // Camera simulation
         document.getElementById('captureBtn').addEventListener('click', () => {
-            // Simulate camera capture
             document.getElementById('fileInput').click();
         });
 
         document.getElementById('retakeBtn').addEventListener('click', () => {
-            // Reset camera view
             document.getElementById('capturedImage').classList.add('hidden');
             document.getElementById('cameraPreview').classList.remove('hidden');
             document.getElementById('retakeBtn').classList.add('hidden');
@@ -563,14 +615,12 @@
             currentImageFile = null;
         });
 
-        // Next button functionality
         document.getElementById('nextBtn').addEventListener('click', async () => {
             if (!currentImageFile) return;
             
             showLoading();
             
             try {
-                // Extract medication information
                 const formData = new FormData();
                 formData.append('photo', currentImageFile);
                 
@@ -585,16 +635,11 @@
                 if (result.success) {
                     extractedInfo = result.extractedInfo;
 
-                    
-                    // Switch to preview tab first to ensure form fields are visible
                     switchTab('preview');
                     
-                    // Wait a moment for the form to be rendered
                     setTimeout(() => {
-                        // Check if the form exists
                         const form = document.getElementById('medicationForm');
                         
-                        // Populate form with extracted data
                         const nameField = document.getElementById('medicationName');
                         const dosageField = document.getElementById('dosage');
                         const scheduleField = document.getElementById('schedule');
@@ -605,25 +650,23 @@
                             nameField.value = extractedInfo.medicationName || '';
 
                         } else {
-                            console.error('Name field not found!');
+                            // Name field not found
                         }
                         if (dosageField) {
                             dosageField.value = extractedInfo.dosage || '';
 
                         } else {
-                            console.error('Dosage field not found!');
+                            // Dosage field not found
                         }
                         if (scheduleField) {
                             scheduleField.value = extractedInfo.schedule || '';
 
                         } else {
-                            console.error('Schedule field not found!');
+                            // Schedule field not found
                         }
                         
 
                         
-                        // Populate refill information fields if available
-                        // Note: Backend spreads refillInfo and pharmacyInfo directly into extractedInfo
                         const hasRefillData = extractedInfo.date_filled || extractedInfo.quantity || extractedInfo.days_supply || extractedInfo.refills_remaining || extractedInfo.refill_expiry_date;
                         
                         if (hasRefillData) {
@@ -663,7 +706,6 @@
 
                         }
                         
-                        // Populate pharmacy information fields if available
                         const hasPharmacyData = extractedInfo.pharmacy_name || extractedInfo.rx_number || extractedInfo.ndc_code || extractedInfo.manufacturer || extractedInfo.prescriber || extractedInfo.insurance_provider;
                         
                         if (hasPharmacyData) {
@@ -690,12 +732,11 @@
                         
 
                         
-                        // Force a visual update by triggering change events
                         if (nameField) nameField.dispatchEvent(new Event('input', { bubbles: true }));
                         if (dosageField) dosageField.dispatchEvent(new Event('input', { bubbles: true }));
                         if (scheduleField) scheduleField.dispatchEvent(new Event('input', { bubbles: true }));
                         
-                    }, 100); // Small delay to ensure form is rendered
+                    }, 100); 
                 } else {
                     alert('Error extracting medication information: ' + result.message);
                 }
@@ -706,9 +747,7 @@
             }
         });
 
-        // Save medication
         document.getElementById('saveBtn').addEventListener('click', async () => {
-            // For refills, photo is optional; for new medications, photo is required
             if (!currentImageFile && currentMode !== 'refill') {
                 alert('Please upload a photo of your medication first');
                 return;
@@ -729,14 +768,12 @@
             
             try {
                 const formData = new FormData();
-                // Only append photo if one exists
                 if (currentImageFile) {
                     formData.append('photo', currentImageFile);
                 }
                 formData.append('name', name);
                 formData.append('dosage', dosage);
                 formData.append('schedule', schedule);
-                // userId is now handled automatically by session authentication
                 
                 
                 
@@ -744,13 +781,11 @@
                     formData.append('specificTime', specificTime);
                 }
                 
-                // Handle refill mode
                 if (currentMode === 'refill' && selectedMedicationForRefill) {
                     formData.append('isRefill', 'true');
                     formData.append('originalMedicationId', selectedMedicationForRefill.id);
                 }
                 
-                // Add extracted info if available
                 if (extractedInfo) {
                     const updatedExtractedInfo = {
                         ...extractedInfo,
@@ -761,7 +796,6 @@
                     formData.append('extractedInfo', JSON.stringify(updatedExtractedInfo));
                 }
                 
-                // Add refill information if provided
                 const dateFilled = document.getElementById('dateFilled').value;
                 const quantity = document.getElementById('quantity').value;
                 const daysSupply = document.getElementById('daysSupply').value;
@@ -792,18 +826,15 @@
                         'Medication added successfully!';
                     alert(message);
                     
-                    // Automatically generate refill reminders for new medications
                     if (currentMode !== 'refill' && result.medication && result.medication.id) {
                         try {
             
                             await generateRefillReminders(result.medication.id);
                         } catch (error) {
-                            console.warn('Could not auto-generate refill reminders:', error);
-                            // Don't block the user if reminder generation fails
+                    
                         }
                     }
                     
-                    // Redirect to schedule page to see the new medication
                     setTimeout(() => {
                         window.location.href = 'schedule.html';
                     }, 100);
@@ -827,7 +858,6 @@
             document.getElementById('loadingState').classList.add('hidden');
         }
 
-        // Function to automatically generate refill reminders
         async function generateRefillReminders(medicationId) {
             try {
     
@@ -858,23 +888,18 @@
             }
         }
 
-        // Initialize the page
         function initializePage() {
-            // Check for refill parameter in URL
             const urlParams = new URLSearchParams(window.location.search);
             const refillId = urlParams.get('refill');
             
             if (refillId) {
-                // Automatically switch to refill mode and select the medication
                 switchMode('refill');
-                // Wait a bit for the medications to load, then select the specific one
                 setTimeout(() => {
                     selectMedicationForRefill(refillId);
                 }, 500);
             }
         }
 
-        // Tab button click handlers
         document.getElementById('uploadTab').addEventListener('click', () => switchTab('upload'));
         document.getElementById('previewTab').addEventListener('click', () => {
             if (currentImageFile) {
@@ -885,18 +910,15 @@
             }
         });
 
-        // Initialize the page when DOM is loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializePage);
         } else {
             initializePage();
         }
 
-        // Make functions globally accessible
         window.translateMedicationInstruction = translateMedicationInstruction;
         window.refreshMedicationInstructions = refreshMedicationInstructions;
 
-        // Hide loading overlay once page is ready
         function hidePageLoading() {
             const overlay = document.getElementById('pageLoadingOverlay');
             if (overlay) {
@@ -907,7 +929,6 @@
             }
         }
 
-        // Show loading overlay during navigation
         function showPageLoading() {
             const overlay = document.getElementById('pageLoadingOverlay');
             if (overlay) {
@@ -916,18 +937,14 @@
             }
         }
 
-        // Hide loading overlay after authentication and page initialization
         window.addEventListener('load', () => {
-            // Wait a bit for auth to complete
             setTimeout(hidePageLoading, 500);
         });
 
-        // Add loading state to navigation buttons
         document.addEventListener('DOMContentLoaded', () => {
             const navButtons = document.querySelectorAll('button[onclick*="window.location.href"]');
             navButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
-                    // Don't show loading for back button
                     if (!button.onclick.toString().includes('index.html')) {
                         showPageLoading();
                     }
@@ -935,28 +952,21 @@
             });
         });
 
-        // Language change handler
         window.addEventListener('languageChanged', function() {
-            console.log('🔄 Language changed on add medication page, refreshing content...');
             
-            // Refresh static HTML content with data-i18n attributes
             if (window.i18n && typeof window.i18n.updatePage === 'function') {
                 window.i18n.updatePage();
             } else {
-                // Manual fallback: refresh static content
                 refreshStaticContent();
             }
             
-            // Refresh medication instructions in the refill selection list
             refreshMedicationInstructions();
         });
         
-        // Also check if language has changed since page load and refresh if needed
         if (window.i18n) {
             const currentLang = window.i18n.getCurrentLanguage();
             const savedLang = localStorage.getItem('language') || 'en';
             if (currentLang !== savedLang) {
-                console.log('🔄 Language preference changed, refreshing content...');
                 setTimeout(() => {
                     refreshStaticContent();
                     refreshMedicationInstructions();
@@ -964,13 +974,8 @@
             }
         }
 
-        // Function to refresh static content with data-i18n attributes
         function refreshStaticContent() {
-            if (!window.i18n) return;
-            
-            console.log('🔄 Refreshing static content...');
-            
-            // Get all elements with data-i18n attributes
+            if (!window.i18n) return;            
             const elements = document.querySelectorAll('[data-i18n]');
             
             elements.forEach(element => {
@@ -982,42 +987,31 @@
                     }
                 }
             });
-            
-            console.log(`✅ Refreshed ${elements.length} static elements`);
         }
 
-        // Function to refresh medication instructions when language changes
         function refreshMedicationInstructions() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing medication instructions...');
             
-            // Refresh instructions in the refill selection list
             const medicationList = document.getElementById('medicationList');
             if (medicationList) {
-                // Find all medication instruction paragraphs
                 const instructionElements = medicationList.querySelectorAll('p.text-xs.text-gray-500[data-original-instruction]');
-                console.log(`🔍 Found ${instructionElements.length} instruction elements to refresh`);
                 
                 instructionElements.forEach((element, index) => {
                     const originalText = element.getAttribute('data-original-instruction');
                     if (originalText) {
                         const translatedInstruction = translateMedicationInstruction(originalText);
                         element.textContent = translatedInstruction;
-                        console.log(`✅ Refreshed instruction ${index}: "${translatedInstruction}"`);
                     }
                 });
             }
         }
 
-        // Function to translate medication instructions (schedule text)
         function translateMedicationInstruction(instruction) {
             if (!window.i18n) return instruction;
             
             const lowerInstruction = instruction.toLowerCase();
-            console.log('🔄 Translating medication instruction:', instruction);
             
-            // Common tablet patterns - English
             if (lowerInstruction.includes('take') && lowerInstruction.includes('tablet') && lowerInstruction.includes('by mouth')) {
                 const match = instruction.match(/take (\d+) tablet(s)? by mouth (.+)/i);
                 if (match) {
@@ -1025,7 +1019,6 @@
                     const plural = count > 1 ? 's' : '';
                     const frequency = match[3];
                     
-                    // Translate the frequency part
                     let translatedFrequency = frequency;
                     if (frequency.includes('every day')) {
                         translatedFrequency = window.i18n.t('schedule.medicationInstructions.frequency.daily');
@@ -1040,12 +1033,10 @@
                         plural: plural, 
                         frequency: translatedFrequency 
                     });
-                    console.log('✅ Translated tablet instruction:', translated);
                     return translated;
                 }
             }
             
-            // Common tablet patterns - Chinese (reverse translation)
             if (lowerInstruction.includes('服用') && lowerInstruction.includes('片') && lowerInstruction.includes('每天')) {
                 const match = instruction.match(/服用(\d+)片(.+)/);
                 if (match) {
@@ -1057,15 +1048,12 @@
                         plural: plural, 
                         frequency: window.i18n.t('schedule.medicationInstructions.frequency.daily')
                     });
-                    console.log('✅ Reverse translated tablet instruction:', translated);
                     return translated;
                 }
             }
             
-            // Generic fallback - try to translate common words
             let translatedInstruction = instruction;
             
-            // Replace common English words with translations
             if (lowerInstruction.includes('take')) {
                 translatedInstruction = translatedInstruction.replace(/take/gi, window.i18n.t('schedule.medicationInstructions.takeTablet').split('{')[0].trim());
             }
@@ -1079,17 +1067,25 @@
                 translatedInstruction = translatedInstruction.replace(/every day/gi, window.i18n.t('schedule.medicationInstructions.frequency.daily'));
             }
             
-            console.log('✅ Translated medication instruction:', translatedInstruction);
             return translatedInstruction;
         }
         
-        // Check for language changes periodically (every 5 seconds)
+        function ensureI18nLoaded() {
+            if (!window.i18n) {
+                setTimeout(ensureI18nLoaded, 100);
+                return;
+            }
+            
+            window.i18n.applyLanguage();
+        }
+        
+        ensureI18nLoaded();
+        
         setInterval(() => {
             if (window.i18n) {
                 const currentLang = window.i18n.getCurrentLanguage();
                 const savedLang = localStorage.getItem('language') || 'en';
                 if (currentLang !== savedLang) {
-                    console.log('🔄 Language preference changed, refreshing content...');
                     refreshStaticContent();
                     refreshMedicationInstructions();
                 }
@@ -1097,9 +1093,9 @@
         }, 5000);
     </script>
     
-    <!-- Authentication Scripts -->
-            <script src="api-utils.js"></script>
-        <script src="auth.js"></script>
-            <script src="auth-guard.js"></script>
+    <script type="module" src="i18n.js"></script>
+    <script type="module" src="api-utils.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="auth-guard.js"></script>
 </body>
 </html>

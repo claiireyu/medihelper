@@ -21,6 +21,62 @@
             }
         }
     </script>
+    <style>
+        /* Smooth transitions for all pages */
+        * {
+            transition: all 0.2s ease-out;
+        }
+        
+        /* Page transitions */
+        .page-transition {
+            animation: pageFadeIn 0.4s ease-out;
+        }
+        
+        /* Card hover effects */
+        .action-card {
+            transition: all 0.3s ease-out;
+            transform: translateY(0);
+        }
+        
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Smooth loading states */
+        .loading-overlay {
+            backdrop-filter: blur(2px);
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease-out;
+        }
+        
+        /* Content animations */
+        .content-fade-in {
+            animation: contentFadeIn 0.5s ease-out;
+        }
+        
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes contentFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -41,9 +97,9 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
         <!-- Greeting Section -->
-        <div class="mb-8">
+        <div class="mb-8 content-fade-in">
             <h2 class="text-3xl font-bold text-gray-900 mb-2" data-greeting data-i18n="dashboard.greeting">Hi there</h2>
             <p class="text-gray-600" data-i18n="header.welcome">Welcome back to your medication management</p>
                 </div>
@@ -67,7 +123,7 @@
         <!-- Action Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Add Medication Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='add-medication.html'">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer action-card" onclick="window.location.href='add-medication.html'">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +138,7 @@
             </div>
 
             <!-- Manage Medications Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='manage-medications.html'">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer action-card" onclick="window.location.href='manage-medications.html'">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +153,7 @@
         </div>
 
             <!-- Refill Dashboard Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='refill-dashboard.html'">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer action-card" onclick="window.location.href='refill-dashboard.html'">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +261,6 @@
     <div class="h-20"></div>
 
     <script>
-        // Load user data and update the interface
         async function loadUserData() {
             try {
                 await Promise.all([
@@ -234,12 +289,10 @@
         }
 
         function updateDashboardStats(stats) {
-            // Update adherence rate
             const adherenceElement = document.getElementById('adherenceRate');
             if (adherenceElement) {
                 adherenceElement.textContent = stats.adherenceRate + '%';
                 
-                // Update color based on adherence rate
                 if (stats.adherenceRate >= 90) {
                     adherenceElement.className = 'text-2xl font-bold text-green-600';
                 } else if (stats.adherenceRate >= 70) {
@@ -249,18 +302,15 @@
                 }
             }
             
-            // Update active medications
             const medicationsElement = document.getElementById('activeMedications');
             if (medicationsElement) {
                 medicationsElement.textContent = stats.activeMedications;
             }
             
-            // Update current streak
             const streakElement = document.getElementById('currentStreak');
             if (streakElement) {
                 streakElement.textContent = stats.currentStreak;
                 
-                // Update color based on streak
                 if (stats.currentStreak >= 7) {
                     streakElement.className = 'text-2xl font-bold text-purple-600';
                 } else if (stats.currentStreak >= 3) {
@@ -269,8 +319,6 @@
                     streakElement.className = 'text-2xl font-bold text-gray-600';
                 }
             }
-            
-
         }
 
         async function loadNextDose() {
@@ -291,15 +339,12 @@
 
         async function loadTodaysSchedule() {
             try {
-                // Use local date to avoid timezone offset issues
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 const day = String(today.getDate()).padStart(2, '0');
                 const serverDate = `${year}-${month}-${day}`;
                 
-                console.log('🏠 DASHBOARD FIXED - Loading schedule for local date:', serverDate);
-                // For dashboard, we want only pending medications (taken ones are already filtered out by default)
                 const response = await makeTimezoneAwareAPICall(API.getMedicationSchedule, serverDate);
                 const data = await response.json();
                 
@@ -308,14 +353,13 @@
                 }
             } catch (error) {
                 console.error('Error loading today\'s schedule:', error);
-                // Show error state
                 const container = document.getElementById('todaysScheduleContainer');
                 if (container) {
                     const errorText = window.i18n ? window.i18n.t('dashboard.unableToLoadSchedule') : 'Unable to load schedule';
                     container.innerHTML = `
                         <div class="text-center py-8">
                             <div class="text-red-400 mb-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-6 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                                 </svg>
                             </div>
@@ -333,7 +377,6 @@
             timeElement.textContent = nextDose.timeDisplay;
             descElement.textContent = `${nextDose.name} - ${nextDose.dosage}`;
             
-            // Add indicator if it's tomorrow
             if (nextDose.isTomorrow) {
                 const tomorrowSpan = document.createElement('span');
                 tomorrowSpan.className = 'text-xs text-blue-600 font-medium';
@@ -358,7 +401,6 @@
         function updateTodaysSchedule(schedule) {
             const container = document.getElementById('todaysScheduleContainer');
             
-            // Get all medications from all time slots
             const allMedications = [
                 ...(schedule.morning || []).map(med => ({...med, timeSlot: 'morning', timeDisplay: med.time || '8:00 AM'})),
                 ...(schedule.afternoon || []).map(med => ({...med, timeSlot: 'afternoon', timeDisplay: med.time || '12:00 PM'})),
@@ -382,7 +424,6 @@
             }
             
             if (allMedications.length === 0) {
-                // All medications for today are done
                 const allDoneText = window.i18n ? window.i18n.t('dashboard.allDoneForToday') : 'All done for today!';
                 const completedText = window.i18n ? window.i18n.t('dashboard.completedAllMedications') : 'You\'ve completed all your medications';
                 container.innerHTML = `
@@ -396,13 +437,11 @@
                         <p class="text-sm text-gray-500 mt-1">${completedText}</p>
                     </div>
                 `;
-                updateScheduleHeader(0, 0); // Will need to get real progress from a separate call
+                updateScheduleHeader(0, 0);
             } else {
-                // Sort pending medications intelligently based on current time
                 const now = new Date();
                 const currentHour = now.getHours();
                 
-                // Categorize medications as current/upcoming vs future
                 const timeSlotHours = { 'morning': 8, 'afternoon': 12, 'evening': 18 };
                 const upcomingMeds = [];
                 const futureMeds = [];
@@ -410,15 +449,13 @@
                 allMedications.forEach(med => {
                     const medHour = timeSlotHours[med.timeSlot] || 8;
                     
-                    // If it's the current time period or upcoming today, prioritize it
-                    if (medHour >= currentHour - 2) { // 2 hour grace period for current
+                    if (medHour >= currentHour - 2) {
                         upcomingMeds.push({...med, sortHour: medHour});
                     } else {
                         futureMeds.push({...med, sortHour: medHour});
                     }
                 });
                 
-                // Sort upcoming by time, then future by time
                 const sortByTime = (a, b) => {
                     if (a.sortHour !== b.sortHour) return a.sortHour - b.sortHour;
                     const aTime = a.specific_time || a.timeDisplay || '';
@@ -429,21 +466,17 @@
                 upcomingMeds.sort(sortByTime);
                 futureMeds.sort(sortByTime);
                 
-                // Combine: upcoming first, then future
                 const sortedPending = [...upcomingMeds, ...futureMeds];
                 
-                // Show next 3 pending medications
                 const displayMeds = sortedPending.slice(0, 3);
                 container.innerHTML = displayMeds.map(med => createMedicationItem(med)).join('');
                 
-                // Load progress separately since we're using filtered data
                 loadProgressStats();
             }
         }
         
         async function loadProgressStats() {
             try {
-                // Get full schedule with taken doses to calculate progress  
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -469,7 +502,6 @@
         }
         
         function updateScheduleHeader(takenCount, totalCount) {
-            // Find the Today's Schedule header and add progress indicator
             const scheduleSection = document.querySelector('.bg-white.rounded-2xl.shadow-sm.border.border-gray-200');
             const scheduleTitle = scheduleSection?.querySelector('h3.text-lg.font-semibold.text-gray-900');
             
@@ -510,7 +542,6 @@
             const pendingText = window.i18n ? window.i18n.t('medication.pending') : 'Pending';
             const statusText = medication.taken ? takenText : pendingText;
             
-            // Format time in user's preferred language
             const formattedTime = formatTimeInUserLanguage(medication.timeDisplay);
             
             return `
@@ -540,7 +571,6 @@
             const now = new Date();
             const currentHour = now.getHours();
             
-            // Check morning medications (before 12 PM)
             if (currentHour < 12 && schedule.morning.length > 0) {
                 return {
                     name: schedule.morning[0].name,
@@ -549,7 +579,6 @@
                 };
             }
             
-            // Check evening medications (after 6 PM)
             if (currentHour >= 18 && schedule.evening.length > 0) {
                 return {
                     name: schedule.evening[0].name,
@@ -558,7 +587,6 @@
                 };
             }
             
-            // Default to first available medication
             if (schedule.morning.length > 0) {
                 return {
                     name: schedule.morning[0].name,
@@ -570,13 +598,9 @@
             return null;
         }
 
-
-
-        // Auto-refresh functionality
         let refreshInterval;
         
         function startAutoRefresh() {
-            // Refresh every 30 seconds
             refreshInterval = setInterval(() => {
                 loadUserData();
             }, 30000);
@@ -589,12 +613,10 @@
             }
         }
         
-        // Function to format time in user's preferred language
         function formatTimeInUserLanguage(timeString) {
             if (!timeString || !window.i18n) return timeString;
             
             try {
-                // Parse the time string (e.g., "6:08 PM", "9:14 PM")
                 const timeMatch = timeString.match(/(\d+):(\d+)\s*(AM|PM)/i);
                 if (!timeMatch) return timeString;
                 
@@ -603,29 +625,22 @@
                 const period = timeMatch[3].toUpperCase();
                 
                 if (window.i18n.getCurrentLanguage() === 'zh') {
-                    // Convert to 24-hour format for Chinese
                     let hour24 = hour;
                     if (period === 'PM' && hour !== 12) hour24 += 12;
                     if (period === 'AM' && hour === 12) hour24 = 0;
                     
                     return `${hour24.toString().padStart(2, '0')}:${minute}`;
                 } else {
-                    // Keep 12-hour format for English
                     return timeString;
                 }
             } catch (error) {
-                console.warn('Time formatting failed:', error);
                 return timeString;
             }
         }
         
-        // Function to refresh static content with data-i18n attributes
         function refreshStaticContent() {
             if (!window.i18n) return;
             
-            console.log('🔄 Refreshing static content on home page...');
-            
-            // Get all elements with data-i18n attributes
             const elements = document.querySelectorAll('[data-i18n]');
             
             elements.forEach(element => {
@@ -637,31 +652,21 @@
                     }
                 }
             });
-            
-            console.log(`✅ Refreshed ${elements.length} static elements on home page`);
         }
 
-        // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize language switcher
             if (window.i18n) {
-                // Ensure saved language preference is loaded
                 window.i18n.reloadSavedLanguage();
                 
                 window.i18n.createLanguageSwitcher('language-switcher-container');
                 
-                // Listen for language changes and refresh content
                 window.addEventListener('languageChanged', function() {
-                    console.log('🔄 Language changed on home page, refreshing content...');
-                    // Refresh all static content with data-i18n attributes
                     if (typeof window.i18n.updatePage === 'function') {
                         window.i18n.updatePage();
                     } else {
-                        // Manual fallback: refresh static content
                         refreshStaticContent();
                     }
                     
-                    // Also refresh dynamic content (medication schedule, stats, etc.)
                     if (window.authManager && window.authManager.isAuthenticated()) {
                         setTimeout(() => {
                             loadUserData();
@@ -669,7 +674,6 @@
                     }
                 });
                 
-                // Also check if language has changed since page load and refresh if needed
                 const currentLang = window.i18n.getCurrentLanguage();
                 const savedLang = localStorage.getItem('userLanguage') || 'en';
                 if (currentLang !== savedLang) {
@@ -683,23 +687,19 @@
                 }
             }
             
-            // Wait for authentication to complete before loading user data
             waitForAuthAndLoadData();
             
-            // Stop auto-refresh when page is hidden to save resources
             document.addEventListener('visibilitychange', function() {
                 if (document.hidden) {
                     stopAutoRefresh();
                 } else {
-                    // Only refresh if user is authenticated
                     if (window.authManager && window.authManager.isAuthenticated()) {
-                        loadUserData(); // Refresh immediately when page becomes visible
+                        loadUserData();
                         startAutoRefresh();
                     }
                 }
             });
             
-            // Check for language changes periodically (every 5 seconds)
             setInterval(() => {
                 if (window.i18n) {
                     const currentLang = window.i18n.getCurrentLanguage();
@@ -711,7 +711,6 @@
                             refreshStaticContent();
                         }
                         
-                        // Also refresh dynamic content
                         if (window.authManager && window.authManager.isAuthenticated()) {
                             setTimeout(() => {
                                 loadUserData();
@@ -722,41 +721,27 @@
             }, 5000);
         });
 
-        // Wait for authentication to complete before loading user data
         async function waitForAuthAndLoadData() {
-            console.log('🔐 Starting authentication check...');
-            
-            // Wait for auth manager to be available
             let attempts = 0;
-            const maxAttempts = 50; // Wait up to 5 seconds
+            const maxAttempts = 50;
             
             while (!window.authManager && attempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
                 if (attempts % 10 === 0) {
-                    console.log(`⏳ Waiting for auth manager... attempt ${attempts}/${maxAttempts}`);
                 }
             }
             
             if (!window.authManager) {
-                console.error('❌ Auth manager not available after waiting');
                 return;
             }
             
-            console.log('✅ Auth manager found, checking authentication status...');
-            
-            // Wait for authentication check to complete
             const isAuthenticated = await window.authManager.checkAuthStatus();
-            console.log(`🔐 Authentication result: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}`);
             
-            // Only load user data if authenticated
             if (window.authManager.isAuthenticated()) {
-                console.log('✅ User authenticated, loading data...');
                 loadUserData();
                 startAutoRefresh();
             } else {
-                console.log('ℹ️ User not authenticated, skipping data load');
-                // Show login button directly in header without extra text
                 const authContainer = document.getElementById('auth-container');
                 if (authContainer) {
                     authContainer.innerHTML = `
@@ -778,15 +763,10 @@
         }
     </script>
     
-    <!-- API Utilities -->
-    <script src="api-utils.js"></script>
-    <!-- Authentication Script -->
-    <script src="auth.js"></script>
-    <!-- Auth Guard Script -->
-    <script src="auth-guard.js"></script>
-    <!-- Internationalization Script -->
     <script type="module" src="i18n.js"></script>
-    <!-- Internationalization Utility -->
-    <script src="update-pages-i18n.js"></script>
+    <script type="module" src="api-utils.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="update-pages-i18n.js"></script>
 </body>
 </html> 

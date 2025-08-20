@@ -1,18 +1,12 @@
-// Deterministic Schedule Parser
-// Replaces AI-based schedule generation with rule-based, deterministic parsing
-
 export class DeterministicScheduleParser {
   constructor() {
-    // Define time slots
     this.timeSlots = {
       morning: { defaultTime: '8:00 AM', timeRange: '5:00 AM - 12:00 PM' },
       afternoon: { defaultTime: '12:00 PM', timeRange: '12:00 PM - 5:00 PM' },
       evening: { defaultTime: '6:00 PM', timeRange: '5:00 PM - 5:00 AM' }
     };
 
-    // Schedule pattern definitions
     this.schedulePatterns = {
-      // Frequency-based patterns
       frequency: {
         onceDailyPatterns: [
           'once daily', 'once a day', '1 time a day', 'one time a day',
@@ -32,14 +26,12 @@ export class DeterministicScheduleParser {
         ]
       },
 
-      // Time-specific patterns
       timeSpecific: {
         morningPatterns: ['morning', 'breakfast', 'am', 'wake up', 'before breakfast'],
         afternoonPatterns: ['afternoon', 'lunch', 'midday', 'noon', 'after lunch'],
         eveningPatterns: ['evening', 'night', 'dinner', 'pm', 'bedtime', 'before bed', 'at night']
       },
 
-      // Complex frequency patterns
       complex: {
         everyOtherDayPatterns: ['every other day', 'every second day', 'alternate days'],
         everyThreeDaysPatterns: ['every 3 days', 'every third day'],
@@ -48,7 +40,6 @@ export class DeterministicScheduleParser {
         alternatingPatterns: ['alternate between', 'alternating', 'switch between']
       },
 
-      // Special timing combinations
       combinations: {
         morningAndEvening: ['morning and evening', 'am and pm', 'twice daily (morning and evening)'],
         withMeals: ['with meals', 'with food', 'after meals', 'before meals'],
@@ -57,16 +48,19 @@ export class DeterministicScheduleParser {
     };
   }
 
-  // Main parsing method
+  /**
+   * Parse medication schedules into structured time slots for a specific date
+   * @param {Array} medications - Array of medication objects with schedule information
+   * @param {string} targetDate - Target date in YYYY-MM-DD format
+   * @returns {Object} Schedule object with morning, afternoon, and evening arrays
+   */
   parseSchedule(medications, targetDate) {
-    
     const schedule = {
       morning: [],
       afternoon: [],
       evening: []
     };
 
-    // Parse target date for calculations
     const dateParts = targetDate.split('-');
     const year = parseInt(dateParts[0]);
     const month = parseInt(dateParts[1]) - 1;
@@ -74,53 +68,45 @@ export class DeterministicScheduleParser {
     const targetDateTime = new Date(year, month, day);
 
     medications.forEach(med => {
-      console.log(`🔧 Processing ${med.name}: "${med.schedule}"`);
-      
-      // Calculate days since medication started
       const daysSinceStart = this.calculateDaysSinceStart(med.created_at, targetDateTime);
       
-      // Skip if medication hasn't started yet
       if (daysSinceStart < 0) {
-        console.log(`⏩ Skipping ${med.name} - not started yet`);
         return;
       }
 
-      // Check if medication should be taken on this date
       if (!this.shouldTakeOnDate(med.schedule, daysSinceStart, targetDateTime, med.created_at)) {
-        console.log(`⏩ Skipping ${med.name} - not scheduled for this date`);
         return;
       }
 
-      // Parse the schedule and add to appropriate time slots
       const parsedMedication = this.parseMedicationSchedule(med, daysSinceStart);
       this.addMedicationToSchedule(schedule, parsedMedication);
     });
 
-    console.log('🔧 Deterministic schedule generation complete');
     return schedule;
   }
 
-  // Calculate days since medication started
+  /**
+   * Calculate days since medication was started relative to target date
+   * @param {Date|string} createdAt - Date when medication was created
+   * @param {Date} targetDateTime - Target date for calculation
+   * @returns {number} Days since medication started (negative if not started yet)
+   */
   calculateDaysSinceStart(createdAt, targetDateTime) {
     let createdDate;
     if (typeof createdAt === 'string') {
-      // Handle UTC strings properly
       if (createdAt.includes('T') && createdAt.includes('Z')) {
         createdDate = new Date(createdAt);
       } else {
-        // For date-only strings, create a UTC date to avoid timezone issues
         createdDate = new Date(createdAt + 'T00:00:00.000Z');
       }
     } else {
       createdDate = new Date(createdAt);
     }
 
-    // Handle invalid dates
     if (isNaN(createdDate.getTime())) {
       return 0;
     }
 
-    // Use local date methods to avoid timezone issues
     const createdYear = createdDate.getFullYear();
     const createdMonth = createdDate.getMonth();
     const createdDay = createdDate.getDate();
@@ -129,22 +115,26 @@ export class DeterministicScheduleParser {
     const targetMonth = targetDateTime.getMonth();
     const targetDay = targetDateTime.getDate();
     
-    // Create date objects at midnight local time for accurate day calculation
     const createdDateOnly = new Date(createdYear, createdMonth, createdDay);
     const targetDateOnly = new Date(targetYear, targetMonth, targetDay);
     
-    // Calculate days difference
     const timeDiff = targetDateOnly.getTime() - createdDateOnly.getTime();
     const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     
     return daysDiff;
   }
 
-  // Check if medication should be taken on a specific date
+  /**
+   * Determine if medication should be taken on a specific date based on schedule pattern
+   * @param {string} schedule - Medication schedule text
+   * @param {number} daysSinceStart - Days since medication started
+   * @param {Date} targetDateTime - Target date to check
+   * @param {Date|string} createdAt - Date when medication was created
+   * @returns {boolean} True if medication should be taken on target date
+   */
   shouldTakeOnDate(schedule, daysSinceStart, targetDateTime, createdAt) {
     const scheduleText = schedule.toLowerCase();
 
-    // Check for complex frequency patterns
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.everyOtherDayPatterns)) {
       return daysSinceStart % 2 === 0;
     }
@@ -163,11 +153,15 @@ export class DeterministicScheduleParser {
       return targetDateTime.getDate() === createdDate.getDate();
     }
 
-    // For daily medications and other patterns, return true
     return true;
   }
 
-  // Parse individual medication schedule
+  /**
+   * Parse individual medication schedule into structured format
+   * @param {Object} med - Medication object
+   * @param {number} daysSinceStart - Days since medication started
+   * @returns {Object} Parsed medication with time slots and dosage information
+   */
   parseMedicationSchedule(med, daysSinceStart) {
     if (!med || !med.schedule) {
       return {
@@ -179,8 +173,6 @@ export class DeterministicScheduleParser {
     }
     
     const scheduleText = med.schedule.toLowerCase();
-    
-    // Parse schedule text to determine time slots
     const timeSlots = this.determineTimeSlots(scheduleText);
     
     return {
@@ -191,16 +183,18 @@ export class DeterministicScheduleParser {
     };
   }
 
-  // Determine which time slots medication should be in
+  /**
+   * Determine which time slots a medication should be placed in based on schedule
+   * @param {string} scheduleText - Lowercase schedule text to analyze
+   * @returns {Array} Array of time slot names (morning, afternoon, evening)
+   */
   determineTimeSlots(scheduleText) {
     const timeSlots = [];
 
-    // Check for specific time combinations first
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.combinations.morningAndEvening)) {
       return ['morning', 'evening'];
     }
 
-    // Check for frequency-based patterns
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.frequency.threeTimesDailyPatterns)) {
       return ['morning', 'afternoon', 'evening'];
     }
@@ -214,17 +208,15 @@ export class DeterministicScheduleParser {
     }
 
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.frequency.onceDailyPatterns)) {
-      // For once daily, check if there's a specific time preference
       if (this.matchesPatterns(scheduleText, this.schedulePatterns.timeSpecific.eveningPatterns)) {
         return ['evening'];
       }
       if (this.matchesPatterns(scheduleText, this.schedulePatterns.timeSpecific.afternoonPatterns)) {
         return ['afternoon'];
       }
-      return ['morning']; // Default for once daily
+      return ['morning'];
     }
 
-    // Check for specific time patterns
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.timeSpecific.morningPatterns)) {
       timeSlots.push('morning');
     }
@@ -235,26 +227,23 @@ export class DeterministicScheduleParser {
       timeSlots.push('evening');
     }
 
-    // Check for frequency patterns that need specific time slots
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.everyOtherDayPatterns)) {
-      return ['morning']; // Place every other day medications in morning by default
+      return ['morning'];
     }
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.everyThreeDaysPatterns)) {
-      return ['morning']; // Place every three days medications in morning by default
+      return ['morning'];
     }
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.weeklyPatterns)) {
-      return ['morning']; // Place weekly medications in morning by default
+      return ['morning'];
     }
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.monthlyPatterns)) {
-      return ['morning']; // Place monthly medications in morning by default
+      return ['morning'];
     }
 
-    // Check for alternating patterns (but not frequency patterns like "every other day")
     if (this.matchesPatterns(scheduleText, this.schedulePatterns.complex.alternatingPatterns)) {
-      return ['afternoon']; // Place alternating medications in afternoon by default
+      return ['afternoon'];
     }
 
-    // If no specific patterns found, default to afternoon
     if (timeSlots.length === 0) {
       return ['afternoon'];
     }
@@ -262,7 +251,11 @@ export class DeterministicScheduleParser {
     return timeSlots;
   }
 
-  // Add parsed medication to schedule
+  /**
+   * Add parsed medication to the appropriate time slots in the schedule
+   * @param {Object} schedule - Schedule object with morning, afternoon, evening arrays
+   * @param {Object} parsedMedication - Parsed medication object with time slots
+   */
   addMedicationToSchedule(schedule, parsedMedication) {
     const { medication, timeSlots, daysSinceStart } = parsedMedication;
 
@@ -271,7 +264,6 @@ export class DeterministicScheduleParser {
     }
 
     timeSlots.forEach(timeSlot => {
-      // Skip invalid time slots
       if (!['morning', 'afternoon', 'evening'].includes(timeSlot)) {
         return;
       }
@@ -285,11 +277,16 @@ export class DeterministicScheduleParser {
       };
 
       schedule[timeSlot].push(medData);
-      console.log(`🔧 Added ${medData.name} to ${timeSlot} at ${medData.time}`);
     });
   }
 
-  // Calculate dosage for specific time and day
+  /**
+   * Calculate appropriate dosage for medication at specific time and day
+   * @param {Object} med - Medication object
+   * @param {string} timeOfDay - Time slot (morning, afternoon, evening)
+   * @param {number} daysSinceStart - Days since medication started
+   * @returns {string} Calculated dosage for the specified time
+   */
   getDosageForTime(med, timeOfDay, daysSinceStart = 0) {
     if (!med || !med.schedule) {
       return med?.dosage || 'Unknown';
@@ -297,7 +294,6 @@ export class DeterministicScheduleParser {
     
     const schedule = med.schedule.toLowerCase();
     
-    // Handle specific medication patterns (e.g., Tacrolimus)
     if (med.name && med.name.toLowerCase().includes('tacrolimus')) {
       if (timeOfDay === 'morning') {
         return '1mg Cap (1 capsule)';
@@ -306,7 +302,6 @@ export class DeterministicScheduleParser {
       }
     }
     
-    // Handle alternating patterns
     if (this.matchesPatterns(schedule, this.schedulePatterns.complex.alternatingPatterns)) {
       return this.calculateAlternatingDosage(med, daysSinceStart);
     }
@@ -314,7 +309,12 @@ export class DeterministicScheduleParser {
     return med.dosage || 'Unknown';
   }
 
-  // Calculate dosage for alternating patterns
+  /**
+   * Calculate dosage for medications with alternating patterns
+   * @param {Object} med - Medication object
+   * @param {number} daysSinceStart - Days since medication started
+   * @returns {string} Alternating dosage based on day pattern
+   */
   calculateAlternatingDosage(med, daysSinceStart) {
     if (!med || !med.schedule) {
       return (med?.dosage || 'Unknown') + ' (alternating)';
@@ -323,7 +323,6 @@ export class DeterministicScheduleParser {
     const schedule = med.schedule.toLowerCase();
     const isEvenDay = daysSinceStart % 2 === 0;
     
-    // Extract alternating dosages from schedule text
     const match = schedule.match(/alternate between (\d+) table.*?and (\d+) table/);
     if (match) {
       const firstDose = parseInt(match[1]);
@@ -332,10 +331,15 @@ export class DeterministicScheduleParser {
       return `${med.dosage || 'Unknown'} (${currentDose} tablet${currentDose > 1 ? 's' : ''})`;
     }
     
-    return (med.dosage || 'Unknown') + ' (alternating)';
+    return (med?.dosage || 'Unknown') + ' (alternating)';
   }
 
-  // Helper method to check if text matches any of the patterns
+  /**
+   * Check if text matches any of the provided patterns
+   * @param {string} text - Text to check
+   * @param {Array} patterns - Array of patterns to match against
+   * @returns {boolean} True if text matches any pattern
+   */
   matchesPatterns(text, patterns) {
     if (!text || !patterns || !Array.isArray(patterns)) {
       return false;
@@ -345,34 +349,31 @@ export class DeterministicScheduleParser {
     return patterns.some(pattern => normalizedText.includes(pattern.toLowerCase()));
   }
 
-  // Apply time-specific overrides for medications with specific times
+  /**
+   * Apply time-specific overrides for medications with specific timing requirements
+   * @param {Object} schedule - Current schedule object
+   * @param {Array} medications - Array of medications to check for time-specific overrides
+   * @returns {Object} Modified schedule with time-specific medications properly placed
+   */
   applyTimeSpecificOverrides(schedule, medications) {
-    console.log('🔧 Applying time-specific overrides...');
-    
     const timeSpecificMeds = medications.filter(med => 
       med.use_specific_time && med.specific_time
     );
     
     if (timeSpecificMeds.length === 0) {
-      console.log('🔧 No time-specific medications found');
       return schedule;
     }
     
-    console.log(`🔧 Found ${timeSpecificMeds.length} time-specific medications:`, 
+    console.log('Time-specific medications:', 
       timeSpecificMeds.map(m => `${m.name} (at ${m.specific_time})`));
     
-    // Create a copy of the schedule to modify
     const modifiedSchedule = {
       morning: [...schedule.morning],
       afternoon: [...schedule.afternoon],
       evening: [...schedule.evening]
     };
     
-    // Process each time-specific medication
     timeSpecificMeds.forEach(med => {
-      console.log(`🔧 Processing time-specific medication: ${med.name}`);
-      
-      // Remove the medication from all time slots first
       modifiedSchedule.morning = modifiedSchedule.morning.filter(m => 
         m.id !== med.id && m.name !== med.name
       );
@@ -383,7 +384,6 @@ export class DeterministicScheduleParser {
         m.id !== med.id && m.name !== med.name
       );
       
-      // Add it to the correct time slot based on specific_time
       const medData = {
         id: med.id,
         name: med.name,
@@ -394,26 +394,26 @@ export class DeterministicScheduleParser {
         time: this.formatTimeForDisplay(med.specific_time)
       };
       
-      // Determine time slot based on the actual time
       const [hours] = med.specific_time.split(':');
       const hour = parseInt(hours);
       
       if (hour >= 5 && hour < 12) {
         modifiedSchedule.morning.push(medData);
-        console.log(`🔧 Added ${med.name} to morning slot at ${medData.time}`);
       } else if (hour >= 12 && hour < 17) {
         modifiedSchedule.afternoon.push(medData);
-        console.log(`🔧 Added ${med.name} to afternoon slot at ${medData.time}`);
       } else {
         modifiedSchedule.evening.push(medData);
-        console.log(`🔧 Added ${med.name} to evening slot at ${medData.time}`);
       }
     });
     
     return modifiedSchedule;
   }
 
-  // Helper method to format time for display
+  /**
+   * Format time string for display (e.g., "14:30" becomes "2:30 PM")
+   * @param {string} timeString - Time string in HH:MM format
+   * @returns {string} Formatted time string for display
+   */
   formatTimeForDisplay(timeString) {
     if (!timeString) return '8:00 AM';
     
@@ -432,7 +432,10 @@ export class DeterministicScheduleParser {
     }
   }
 
-  // Get supported schedule patterns for documentation
+  /**
+   * Get all supported schedule patterns for documentation and testing
+   * @returns {Object} Object containing all supported pattern categories
+   */
   getSupportedPatterns() {
     return {
       frequencyPatterns: {

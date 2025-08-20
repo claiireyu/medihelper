@@ -350,7 +350,7 @@ export function createTestServer(testDb) {
   // Cache management endpoints
   app.get('/api/cache/stats', async (req, res) => {
     try {
-      const stats = scheduleCache.getCacheStats();
+      const stats = scheduleCache.getStats();
       res.json(stats);
     } catch (error) {
       console.error('Error fetching cache stats:', error);
@@ -363,7 +363,7 @@ export function createTestServer(testDb) {
       const userId = req.user.id;
       
       // Clear user-specific cache
-      scheduleCache.invalidateUserSchedules(userId);
+      scheduleCache.clearUser(userId);
       
       res.json({ message: 'Cache cleared successfully for user' });
     } catch (error) {
@@ -414,7 +414,6 @@ export async function startTestServer(testDb, port = 3002) {
   
   return new Promise((resolve) => {
     const server = app.listen(port, () => {
-      console.log(`✅ Test server running on port ${port}`);
       resolve({ app, server });
     });
   });
@@ -424,7 +423,6 @@ export async function startTestServer(testDb, port = 3002) {
 export function stopTestServer(server) {
   return new Promise((resolve) => {
     server.close(() => {
-      console.log('✅ Test server stopped');
       resolve();
     });
   });

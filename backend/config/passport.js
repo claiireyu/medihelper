@@ -32,12 +32,13 @@ export function configurePassport(db) {
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      console.log('Google OAuth Profile:', {
+      // Create user object from profile
+      const userData = {
         id: profile.id,
         name: profile.displayName,
         email: profile.emails?.[0]?.value,
         photo: profile.photos?.[0]?.value
-      });
+      };
 
       // Check if user already exists with this Google ID
       let result = await db.query('SELECT * FROM users WHERE google_id = $1', [profile.id]);
@@ -56,7 +57,6 @@ export function configurePassport(db) {
           profile.photos?.[0]?.value,
           profile.id
         ]);
-        console.log('Updated existing user:', updateResult.rows[0]);
         return done(null, updateResult.rows[0]);
       }
 
@@ -77,7 +77,6 @@ export function configurePassport(db) {
             profile.photos?.[0]?.value,
             profile.emails[0].value
           ]);
-          console.log('Linked Google account to existing user:', linkResult.rows[0]);
           return done(null, linkResult.rows[0]);
         }
       }
@@ -95,7 +94,6 @@ export function configurePassport(db) {
         profile.photos?.[0]?.value
       ]);
       
-      console.log('Created new user:', insertResult.rows[0]);
       return done(null, insertResult.rows[0]);
 
     } catch (error) {

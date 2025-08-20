@@ -18,5 +18,20 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        'add-medication': 'add-medication.html',
+        'manage-medications': 'manage-medications.html',
+        'refill-dashboard': 'refill-dashboard.html',
+        'schedule': 'schedule.html',
+        'history': 'history.html',
+        'verify': 'verify.html'
+      }
+    }
   }
 })

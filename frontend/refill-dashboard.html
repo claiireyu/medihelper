@@ -21,6 +21,76 @@
             }
         }
     </script>
+    <style>
+        /* Smooth transitions for refill dashboard page */
+        * {
+            transition: all 0.2s ease-out;
+        }
+        
+        /* Page transitions */
+        .page-transition {
+            animation: pageFadeIn 0.4s ease-out;
+        }
+        
+        /* Summary card transitions */
+        .summary-card {
+            transition: all 0.3s ease-out;
+            transform: translateY(0);
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Medication card transitions */
+        .medication-card {
+            transition: all 0.3s ease-out;
+            transform: translateY(0);
+        }
+        
+        .medication-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Status indicator transitions */
+        .status-indicator {
+            transition: all 0.3s ease-out;
+            transform: scale(1);
+        }
+        
+        .status-indicator:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Content animations */
+        .content-fade-in {
+            animation: contentFadeIn 0.5s ease-out;
+        }
+        
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes contentFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -35,20 +105,22 @@
                     </button>
                     <h1 class="text-xl font-bold text-gray-900" data-i18n="refillDashboard.title">Refill Dashboard</h1>
                 </div>
-                <div class="flex space-x-2">
-                    <button onclick="window.location.href='add-medication.html'" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-i18n="refillDashboard.addMedication">
-                        + Add Medication
-                    </button>
-                    <button onclick="window.location.href='manage-medications.html'" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-i18n="refillDashboard.manageAll">
-                        Manage All
-                    </button>
+                <div class="flex items-center space-x-4">
+                    <div class="flex space-x-2">
+                        <button onclick="window.location.href='add-medication.html'" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-i18n="refillDashboard.addMedication">
+                            + Add Medication
+                        </button>
+                        <button onclick="window.location.href='manage-medications.html'" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-i18n="refillDashboard.manageAll">
+                            Manage All
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 page-transition">
         
         <!-- Page Header with Greeting -->
         <div class="mb-8">
@@ -181,70 +253,53 @@
         let currentTab = 'medications';
         let dashboardData = null;
 
-        // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication first
             if (typeof authGuard !== 'undefined') {
                 authGuard.checkAuth();
             }
             
-            // Periodic language check (every 5 seconds)
             setInterval(() => {
                 if (window.i18n) {
                     const currentLang = window.i18n.getCurrentLanguage();
                     const savedLang = localStorage.getItem('userLanguage') || 'en';
                     if (currentLang !== savedLang) {
-                        console.log('🔄 Language preference changed, refreshing content...');
                         refreshAllContent();
                     }
                 }
             }, 5000);
 
-            // Initialize i18n with retry mechanism
             const initializeI18n = () => {
                 if (window.i18n) {
-                    console.log('🔄 Initializing i18n on refill dashboard...');
                     window.i18n.updatePage();
                     
-                    // Listen for language changes and refresh content
                     window.addEventListener('languageChanged', function() {
-                        console.log('🔄 Language changed on refill dashboard, refreshing content...');
                         refreshAllContent();
                         refreshOpenModals();
                     });
                     
-                    // Check if language has changed since page load and refresh if needed
                     const currentLang = window.i18n.getCurrentLanguage();
                     const savedLang = localStorage.getItem('userLanguage') || 'en';
-                    console.log('🔄 Language check - Current:', currentLang, 'Saved:', savedLang);
                     if (currentLang !== savedLang) {
-                        console.log('🔄 Language preference changed, refreshing content...');
                         setTimeout(() => {
                             refreshAllContent();
                         }, 100);
                     }
                     
-                    // Load greeting after i18n is initialized
                     loadGreeting();
                     
-                    // Also check if we need to refresh based on saved language preference
                     const savedLanguage = localStorage.getItem('userLanguage');
                     if (savedLanguage && savedLanguage !== currentLang) {
-                        console.log('🔄 Detected saved language preference:', savedLanguage, 'refreshing...');
                         setTimeout(() => {
                             refreshAllContent();
                         }, 200);
                     }
                 } else {
-                    console.log('⚠️ i18n not available, waiting...');
                     setTimeout(initializeI18n, 100);
                 }
             };
             
-            // Start i18n initialization
             initializeI18n();
             
-            // Wait for API to be available before loading dashboard data
             const waitForAPI = () => {
                 if (typeof window.API_BASE !== 'undefined') {
                     loadDashboardData();
@@ -254,14 +309,11 @@
             };
             waitForAPI();
             
-            // Also check language when page becomes visible (e.g., user returns from another tab)
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden && window.i18n) {
-                    console.log('🔄 Page became visible, checking language...');
                     const currentLang = window.i18n.getCurrentLanguage();
                     const savedLang = localStorage.getItem('userLanguage') || 'en';
                     if (currentLang !== savedLang) {
-                        console.log('🔄 Language changed while page was hidden, refreshing...');
                         setTimeout(() => {
                             refreshAllContent();
                         }, 100);
@@ -269,15 +321,11 @@
                 }
             });
             
-            // Immediate language check after a short delay
             setTimeout(() => {
                 if (window.i18n) {
-                    console.log('🔄 Immediate language check after page load...');
                     const currentLang = window.i18n.getCurrentLanguage();
                     const savedLang = localStorage.getItem('userLanguage') || 'en';
-                    console.log('🔄 Immediate check - Current:', currentLang, 'Saved:', savedLang);
                     if (currentLang !== savedLang) {
-                        console.log('🔄 Language mismatch detected, refreshing...');
                         refreshAllContent();
                     }
                 }
@@ -307,15 +355,10 @@
         }
 
         async function loadDashboardData() {
-            // Debug: Check if loading element exists
             const loadingElement = document.getElementById('loadingState');
-            console.log('Loading element found:', loadingElement ? 'YES' : 'NO');
-            
             showLoading();
             
             try {
-                // First check if user is authenticated
-                console.log('Checking authentication status...');
                 const authResponse = await fetch(`${window.API_BASE}/auth/user`, {
                     credentials: 'include'
                 });
@@ -329,60 +372,36 @@
                     throw new Error('User not authenticated. Please log in.');
                 }
                 
-                console.log('User authenticated:', authData.user.name);
-                
-                // Now load dashboard data
-                console.log('Loading dashboard data from:', `${window.API_BASE}/dashboard/refills`);
-                
                 const response = await fetch(`${window.API_BASE}/dashboard/refills`, {
                     credentials: 'include'
                 });
                 
-                console.log('Response status:', response.status, response.statusText);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-                
                 if (!response.ok) {
-                    // Try to get the response text to see what's being returned
                     const responseText = await response.text();
-                    console.error('Response text:', responseText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                console.log('Response is OK, attempting to parse JSON...');
-                
-                // Get the response text first to debug
                 const responseText = await response.text();
-                console.log('Raw response text:', responseText);
                 
                 let data;
                 try {
                     data = JSON.parse(responseText);
-                    console.log('Successfully parsed JSON:', data);
                 } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    console.error('Response text that failed to parse:', responseText);
                     throw new Error(`Failed to parse JSON response: ${parseError.message}`);
                 }
                 
                 if (data.success) {
-                    console.log('Data loaded successfully, updating UI...');
-                    console.log('🔍 Full API response:', data);
-                    console.log('🔍 Medications array:', data.medications);
-                    console.log('🔍 First medication structure:', data.medications[0]);
-                    
                     dashboardData = data;
                     updateSummaryCards(data.summary);
                     displayMedications(data.medications);
                     displayReminders(data.upcomingReminders);
                     displayCalculations(data.medications);
-                    console.log('UI updated successfully');
                     
-                    // After loading data, check if we need to refresh language
+
                     if (window.i18n) {
                         const currentLang = window.i18n.getCurrentLanguage();
                         const savedLang = localStorage.getItem('userLanguage') || 'en';
                         if (currentLang !== savedLang) {
-                            console.log('🔄 Language mismatch after data load, refreshing...');
                             setTimeout(() => {
                                 window.i18n.updatePage();
                                 refreshDynamicContent();
@@ -395,7 +414,7 @@
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
                 
-                // Show user-friendly error message
+
                 const container = document.getElementById('medicationsList');
                 if (container) {
                     container.innerHTML = `
@@ -426,29 +445,6 @@
         function displayMedications(medications) {
             const container = document.getElementById('medicationsList');
             
-            console.log('🔍 displayMedications called with:', medications);
-            if (medications.length > 0) {
-                console.log('🔍 First medication data:', medications[0]);
-                console.log('🔍 First medication schedule:', medications[0].schedule);
-                console.log('🔍 All available fields:', Object.keys(medications[0]));
-                
-                // Check for schedule-related fields
-                const scheduleFields = Object.keys(medications[0]).filter(key => 
-                    key.toLowerCase().includes('schedule') || 
-                    key.toLowerCase().includes('instruction') ||
-                    key.toLowerCase().includes('dosage')
-                );
-                console.log('🔍 Schedule-related fields found:', scheduleFields);
-                
-                // Check if schedule is nested
-                if (medications[0].medication) {
-                    console.log('🔍 Nested medication object:', medications[0].medication);
-                    console.log('🔍 Nested medication schedule:', medications[0].medication.schedule);
-                }
-                
-                console.log('🔍 Medication object structure:', JSON.stringify(medications[0], null, 2));
-            }
-            
             if (medications.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-gray-500 py-12">
@@ -467,9 +463,6 @@
 
             const html = medications.map(medication => {
                 try {
-                    console.log('🔍 Processing medication:', medication.name);
-                    console.log('🔍 Medication schedule:', medication.schedule);
-                    
                     return `
                         <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
                             <div class="flex items-start justify-between">
@@ -488,15 +481,7 @@
                                     </div>
                                     
                                     <div class="text-sm text-gray-600 mb-4">
-                                        <p><span class="font-medium">${window.i18n ? window.i18n.t('refillDashboard.medicationCard.schedule') : 'Schedule'}:</span> ${(() => {
-                                            const original = medication.schedule;
-                                            const translated = translateMedicationInstruction(medication.schedule);
-                                            console.log('🔍 Schedule translation debug:');
-                                            console.log('  - Original:', original);
-                                            console.log('  - Translated:', translated);
-                                            console.log('  - Will display:', translated || 'No schedule');
-                                            return translated || 'No schedule';
-                                        })()}</p>
+                                        <p><span class="font-medium">${window.i18n ? window.i18n.t('refillDashboard.medicationCard.schedule') : 'Schedule'}:</span> ${translateMedicationInstruction(medication.schedule) || 'No schedule'}</p>
                                         <p><span class="font-medium">${window.i18n ? window.i18n.t('refillDashboard.medicationCard.message') : 'Message'}:</span> ${translateDynamicMessage(medication.refillStatus.message)}</p>
                                     </div>
                                     
@@ -516,7 +501,7 @@
                         </div>
                     `;
                 } catch (error) {
-                    console.error('❌ Error processing medication:', medication.name, error);
+                    console.error('Error processing medication:', medication.name, error);
                     return `
                         <div class="bg-red-50 rounded-lg border border-red-200 p-6">
                             <p class="text-red-600">Error displaying medication: ${medication.name}</p>
@@ -622,21 +607,21 @@
         }
 
         function showTab(tabName) {
-            // Hide all tab contents
+            
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
             
-            // Remove active state from all tab buttons
+            
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('border-primary-500', 'text-primary-600');
                 button.classList.add('border-transparent', 'text-gray-500');
             });
             
-            // Show selected tab content
+            
             document.getElementById(tabName + 'Tab').classList.remove('hidden');
             
-            // Activate selected tab button
+            
             const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
             activeButton.classList.remove('border-transparent', 'text-gray-500');
             activeButton.classList.add('border-primary-500', 'text-primary-600');
@@ -644,7 +629,7 @@
             currentTab = tabName;
         }
 
-        // Helper functions
+        
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             return new Date(dateString).toLocaleDateString();
@@ -690,44 +675,34 @@
         // Helper function to translate medication instructions
         function translateMedicationInstruction(instruction) {
             if (!window.i18n || !instruction) {
-                console.log('🔍 translateMedicationInstruction: No i18n or instruction:', { hasI18n: !!window.i18n, instruction });
                 return instruction;
             }
             
-            console.log('🔍 translateMedicationInstruction called with:', instruction);
-            console.log('🔍 Current language:', window.i18n.currentLanguage);
             
-            // Check if it's a tablet instruction
             const tabletMatch = instruction.match(/Take (\d+(?:\.\d+)?) tablet(s?) by mouth (.+)/);
-            console.log('🔍 Tablet match attempt:', tabletMatch);
             if (tabletMatch) {
                 const quantity = tabletMatch[1];
                 const plural = tabletMatch[2];
                 const frequency = tabletMatch[3];
-                console.log('🔍 Tablet match:', { quantity, plural, frequency });
                 
-                // Translate the frequency
+                
                 const translatedFrequency = translateFrequency(frequency);
-                console.log('🔍 Translated frequency:', translatedFrequency);
                 
-                // Build the translated instruction
+                
                 const translated = window.i18n.t('refillDashboard.medicationInstructions.takeTablet', {
                     quantity: quantity,
                     plural: plural,
                     frequency: translatedFrequency
                 });
-                console.log('✅ Translated tablet instruction:', translated);
                 return translated;
             }
             
-            // Check if it's a capsule instruction
+            
             const capsuleMatch = instruction.match(/Take (\d+(?:\.\d+)?) capsule(s?) (.+)/);
-            console.log('🔍 Capsule match attempt:', capsuleMatch);
             if (capsuleMatch) {
                 const quantity = capsuleMatch[1];
                 const plural = capsuleMatch[2];
                 const frequency = capsuleMatch[3];
-                console.log('🔍 Capsule match:', { quantity, plural, frequency });
                 
                 const translatedFrequency = translateFrequency(frequency);
                 const translated = window.i18n.t('refillDashboard.medicationInstructions.takeCapsule', {
@@ -735,18 +710,15 @@
                     plural: plural,
                     frequency: translatedFrequency
                 });
-                console.log('✅ Translated capsule instruction:', translated);
                 return translated;
             }
             
-            // Check if it's a liquid instruction
+            
             const liquidMatch = instruction.match(/Take (\d+(?:\.\d+)?) (.+) of liquid (.+)/);
-            console.log('🔍 Liquid match attempt:', liquidMatch);
             if (liquidMatch) {
                 const quantity = liquidMatch[1];
                 const unit = liquidMatch[2];
                 const frequency = liquidMatch[3];
-                console.log('🔍 Liquid match:', { quantity, unit, frequency });
                 
                 const translatedFrequency = translateFrequency(frequency);
                 const translated = window.i18n.t('refillDashboard.medicationInstructions.takeLiquid', {
@@ -754,30 +726,20 @@
                     unit: unit,
                     frequency: translatedFrequency
                 });
-                console.log('✅ Translated liquid instruction:', translated);
                 return translated;
             }
             
-            console.log('⚠️ No translation pattern found for instruction:', instruction);
-            console.log('⚠️ Available patterns: tablet, capsule, liquid');
             
-            // Check if instruction is already in Chinese and needs reverse translation
             if (window.i18n.currentLanguage === 'zh') {
-                console.log('🔍 Checking for reverse translation from Chinese');
                 
-                // Check if it's already a Chinese tablet instruction
                 const chineseTabletMatch = instruction.match(/口服 (\d+(?:\.\d+)?) 片(.*?) (.+)/);
-                console.log('🔍 Chinese tablet match attempt:', chineseTabletMatch);
                 if (chineseTabletMatch) {
-                    console.log('✅ Instruction already in Chinese, no translation needed');
                     return instruction;
                 }
                 
-                // Check if it's already a Chinese capsule instruction
+                
                 const chineseCapsuleMatch = instruction.match(/服用 (\d+(?:\.\d+)?) 粒胶囊(.*?) (.+)/);
-                console.log('🔍 Chinese capsule match attempt:', chineseCapsuleMatch);
                 if (chineseCapsuleMatch) {
-                    console.log('✅ Instruction already in Chinese, no translation needed');
                     return instruction;
                 }
             }
@@ -785,13 +747,11 @@
             return instruction;
         }
         
-        // Helper function to translate frequency text
+        
         function translateFrequency(frequency) {
             if (!window.i18n) return frequency;
             
-            console.log('🔍 translateFrequency called with:', frequency);
-            
-            // Check for common frequency patterns
+
             const frequencyPatterns = {
                 'every day': 'daily',
                 'twice daily': 'twiceDaily',
@@ -814,115 +774,77 @@
             
             if (patternKey) {
                 const translated = window.i18n.t(`refillDashboard.frequency.${patternKey}`);
-                console.log('✅ Frequency translation found:', translated);
                 return translated;
             }
             
-            console.log('⚠️ No frequency pattern found for:', frequency);
             return frequency;
-        }
+        }       
 
-        // Helper function to translate dynamic backend messages
         function translateDynamicMessage(message) {
             if (!window.i18n || !message) {
-                console.log('🔍 translateDynamicMessage: No i18n or message:', { hasI18n: !!window.i18n, message });
                 return message;
             }
             
-            console.log('🔍 translateDynamicMessage called with:', message);
-            console.log('🔍 Current language:', window.i18n.currentLanguage);
-            
-            // Check if it's a supply good message
             const supplyGoodMatch = message.match(/(.+) supply is good \((\d+) days remaining\)/);
             if (supplyGoodMatch) {
                 const medication = supplyGoodMatch[1];
                 const days = supplyGoodMatch[2];
-                console.log('🔍 Supply good match:', { medication, days });
                 const translated = window.i18n.t('refillDashboard.dynamicMessages.supplyGood', { medication, days });
-                console.log('✅ Translated supply good message:', translated);
                 return translated;
             }
             
-            // Check if it's an urgent refill message
             const urgentRefillMatch = message.match(/URGENT: Refill for (.+) is due in (\d+) days/);
             if (urgentRefillMatch) {
                 const medication = urgentRefillMatch[1];
                 const days = urgentRefillMatch[2];
-                console.log('🔍 Urgent refill match:', { medication, days });
                 const translated = window.i18n.t('refillDashboard.dynamicMessages.urgentRefill', { medication, days });
-                console.log('✅ Translated urgent refill message:', translated);
                 return translated;
             }
             
-            // Check if it's a final reminder message
             const finalReminderMatch = message.match(/FINAL REMINDER: Refill for (.+) is due tomorrow/);
             if (finalReminderMatch) {
                 const medication = finalReminderMatch[1];
-                console.log('🔍 Final reminder match:', { medication });
                 const translated = window.i18n.t('refillDashboard.dynamicMessages.finalReminder', { medication });
-                console.log('✅ Translated final reminder message:', translated);
                 return translated;
             }
             
-            // Check if it's a refill due message
             const refillDueMatch = message.match(/refill due/);
             if (refillDueMatch) {
-                console.log('🔍 Refill due match found');
                 const translated = window.i18n.t('refillDashboard.dynamicMessages.refillDue');
-                console.log('✅ Translated refill due message:', translated);
                 return translated;
             }
             
-            // Check if it's a refill due in days message
             const refillDueInDaysMatch = message.match(/due in (\d+) days/);
             if (refillDueInDaysMatch) {
                 const days = refillDueInDaysMatch[1];
-                console.log('🔍 Refill due in days match:', { days });
                 const translated = window.i18n.t('refillDashboard.dynamicMessages.refillDueInDays', { days });
-                console.log('✅ Translated refill due in days message:', translated);
                 return translated;
             }
             
-            console.log('⚠️ No translation pattern found for:', message);
             return message;
         }
 
-        // Helper function to translate status text
         function translateStatus(status) {
             if (!window.i18n) {
-                console.log('🔍 translateStatus: No i18n available');
                 return status.replace('_', ' ').toUpperCase();
             }
-            console.log('🔍 translateStatus called with:', status);
             const translated = window.i18n.t(`refillDashboard.statusValues.${status}`) || status.replace('_', ' ').toUpperCase();
-            console.log('✅ Status translation result:', translated);
             return translated;
         }
 
-        // Helper function to translate urgency text
         function translateUrgency(urgency) {
             if (!window.i18n) {
-                console.log('🔍 translateUrgency: No i18n available');
                 return urgency;
             }
             
-            console.log('🔍 translateUrgency called with:', urgency);
-            console.log('🔍 Current language:', window.i18n.currentLanguage);
-            
-            // Normalize the urgency value to lowercase for consistent matching
             const normalizedUrgency = urgency ? urgency.toLowerCase() : urgency;
-            console.log('🔍 Normalized urgency:', normalizedUrgency);
             
-            // Try to translate the urgency value
             let translated = window.i18n.t(`refillDashboard.urgencyValues.${normalizedUrgency}`);
-            console.log('🔍 Translation attempt for', `refillDashboard.urgencyValues.${normalizedUrgency}:`, translated);
             
             if (translated && translated !== `refillDashboard.urgencyValues.${normalizedUrgency}`) {
-                console.log('✅ Translation found:', translated);
                 return translated;
             }
             
-            // If no translation found, provide fallback translations
             const fallbackTranslations = {
                 'none': window.i18n.t('refillDashboard.urgencyValues.none') || 'NONE',
                 'low': window.i18n.t('refillDashboard.urgencyValues.low') || 'LOW',
@@ -930,21 +852,15 @@
                 'high': window.i18n.t('refillDashboard.urgencyValues.high') || 'HIGH'
             };
             
-            console.log('🔍 Fallback translations:', fallbackTranslations);
-            console.log('🔍 Looking for urgency:', normalizedUrgency, 'in fallbacks');
-            
             const result = fallbackTranslations[normalizedUrgency] || urgency;
-            console.log('🔍 Final result:', result);
             return result;
         }
 
-        // Helper function to translate reminder type text
         function translateReminderType(type) {
             if (!window.i18n) return type.replace('_', ' ');
             return window.i18n.t(`refillDashboard.reminderTypeLabels.${type}`) || type.replace('_', ' ');
         }
 
-        // Helper function to translate reminder status text
         function translateReminderStatus(status) {
             if (!window.i18n) return status;
             return window.i18n.t(`refillDashboard.statusLabels.${status}`) || status;
@@ -954,8 +870,6 @@
             const loadingElement = document.getElementById('loadingState');
             if (loadingElement) {
                 loadingElement.classList.remove('hidden');
-            } else {
-                console.warn('Loading state element not found');
             }
         }
 
@@ -963,12 +877,10 @@
             const loadingElement = document.getElementById('loadingState');
             if (loadingElement) {
                 loadingElement.classList.add('hidden');
-            } else {
-                console.warn('Loading state element not found');
             }
         }
 
-        // Refill management functions (same as in manage-medications.html)
+
         async function viewRefillStatus(medicationId) {
             try {
                 showLoading();
@@ -1065,16 +977,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Close the modal first
                     const modal = document.querySelector('.fixed');
                     if (modal) {
                         modal.remove();
                     }
                     
-                    // Show success message
                     alert('Reminder status updated successfully!');
                     
-                    // Redirect to manage medications page
                     window.location.href = 'manage-medications.html';
                 } else {
                     alert('Error updating reminder status: ' + data.message);
@@ -1085,14 +994,7 @@
             }
         }
 
-        // Modal display functions (same as in manage-medications.html)
         function showRefillStatusModal(data) {
-            console.log('🔍 showRefillStatusModal called with data:', data);
-            console.log('🔍 Current language:', window.i18n ? window.i18n.currentLanguage : 'No i18n');
-            console.log('🔍 Status:', data.refillStatus.status);
-            console.log('🔍 Urgency:', data.refillStatus.urgency);
-            console.log('🔍 Message:', data.refillStatus.message);
-            
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
             modal.innerHTML = `
@@ -1135,12 +1037,6 @@
                 </div>
             `;
             document.body.appendChild(modal);
-            
-            // Debug: Log what translation keys were used
-            console.log('🔍 Modal created with translation keys:');
-            console.log('- Title:', window.i18n ? window.i18n.t('refillDashboard.modals.refillStatus.title') : 'Refill Status');
-            console.log('- Days Until Refill:', window.i18n ? window.i18n.t('refillDashboard.modals.refillStatus.daysUntilRefill') : 'Days Until Refill');
-            console.log('- Urgency translation:', translateUrgency(data.refillStatus.urgency));
         }
 
         function showRefillCalculationModal(data) {
@@ -1286,7 +1182,6 @@
                 
                 if (data.success) {
                     alert(`Successfully generated ${data.reminders.length} refill reminders!`);
-                    // Close modal and refresh dashboard
                     const modal = document.querySelector('.fixed');
                     if (modal) {
                         modal.remove();
@@ -1303,29 +1198,21 @@
             }
         }
 
-        // Function to refresh all content
         function refreshAllContent() {
-            console.log('🔄 Refreshing all content...');
             refreshStaticContent();
             refreshDynamicContent();
         }
 
-        // Function to refresh static content
         function refreshStaticContent() {
-            console.log('🔄 Refreshing static content...');
             if (window.i18n && window.i18n.updatePage) {
                 window.i18n.updatePage();
             }
         }
 
-        // Function to refresh dynamic content
         function refreshDynamicContent() {
-            console.log('🔄 Refreshing dynamic content...');
             if (dashboardData) {
-                // Refresh summary cards
                 updateSummaryCards(dashboardData.summary);
                 
-                // Refresh tab content based on current tab
                 if (currentTab === 'medications') {
                     displayMedications(dashboardData.medications);
                 } else if (currentTab === 'reminders') {
@@ -1333,45 +1220,42 @@
                 } else if (currentTab === 'calculations') {
                     displayCalculations(dashboardData.medications);
                 }
-                
-                console.log('✅ Dynamic content refreshed on refill dashboard');
             }
         }
 
-        // Function to refresh all open modals
         function refreshOpenModals() {
-            console.log('🔄 refreshOpenModals called');
-            
-            // Find all open modals
             const openModals = document.querySelectorAll('.fixed');
-            console.log('🔍 Found open modals:', openModals.length);
             
             if (openModals.length === 0) {
-                console.log('ℹ️ No open modals found');
                 return;
             }
             
-            // Remove all open modals so they can be re-rendered with new language
-            openModals.forEach((modal, index) => {
-                console.log(`🗑️ Removing modal ${index + 1}`);
+            openModals.forEach((modal) => {
                 modal.remove();
             });
-            
-            console.log('✅ All open modals removed, they will be re-rendered when needed');
         }
 
-        // Language change listener
+        function ensureI18nLoaded() {
+            if (!window.i18n) {
+                setTimeout(ensureI18nLoaded, 100);
+                return;
+            }
+            
+            window.i18n.applyLanguage();
+        }
+        
+        ensureI18nLoaded();
+        
         window.addEventListener('languageChanged', () => {
-            console.log('🔄 Language changed on refill dashboard, refreshing content...');
             refreshAllContent();
             refreshOpenModals();
         });
     </script>
     
     <!-- Auth and API Scripts -->
-    <script src="api-utils.js"></script>
-    <script src="auth.js"></script>
-    <script src="auth-guard.js"></script>
-    <script src="i18n.js"></script>
+    <script type="module" src="i18n.js"></script>
+    <script type="module" src="api-utils.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="auth-guard.js"></script>
 </body>
 </html>

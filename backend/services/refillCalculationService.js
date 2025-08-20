@@ -1,11 +1,9 @@
 // Refill Calculation Service
 // Provides deterministic calculations for medication refill scheduling
 // Integrates with DeterministicScheduleParser for schedule-aware calculations
-// Following the same pattern as DeterministicScheduleParser
 
 export class RefillCalculationService {
   constructor(deterministicParser = null) {
-    // Define reminder timing rules (in days before refill is due)
     this.reminderTiming = {
       early: 14,     // 14 days before (gentle reminder)
       primary: 7,    // 7 days before refill due
@@ -13,11 +11,91 @@ export class RefillCalculationService {
       final: 1       // 1 day before refill due
     };
 
-    // Low supply warning threshold (in days)
     this.lowSupplyThreshold = 7;
-    
-    // Optional: Reference to DeterministicScheduleParser for enhanced calculations
     this.scheduleParser = deterministicParser;
+  }
+
+  /**
+   * Set or update the schedule parser instance
+   * @param {DeterministicScheduleParser} parser - The schedule parser instance
+   */
+  setScheduleParser(parser) {
+    if (parser && typeof parser.shouldTakeOnDate === 'function') {
+      this.scheduleParser = parser;
+    } else {
+      console.warn('⚠️ Invalid schedule parser provided, must have shouldTakeOnDate method');
+      this.scheduleParser = null;
+    }
+  }
+
+  /**
+   * Get the current schedule parser instance
+   * @returns {DeterministicScheduleParser|null} The current schedule parser or null
+   */
+  getScheduleParser() {
+    return this.scheduleParser;
+  }
+
+  /**
+   * Check if schedule parser is available and functional
+   * @returns {boolean} True if schedule parser is available and functional
+   */
+  isScheduleParserAvailable() {
+    return !!(this.scheduleParser && typeof this.scheduleParser.shouldTakeOnDate === 'function');
+  }
+
+  /**
+   * Create a standardized error object for consistent error handling
+   * @param {string} message - Error message
+   * @param {string} code - Error code for categorization
+   * @param {Object} details - Additional error details
+   * @returns {Object} Standardized error object
+   */
+  createError(message, code = 'CALCULATION_ERROR', details = {}) {
+    return {
+      error: true,
+      code,
+      message,
+      details,
+      timestamp: new Date().toISOString(),
+      service: 'RefillCalculationService'
+    };
+  }
+
+  /**
+   * Validate medication data for refill calculations
+   * @param {Object} medication - Medication object
+   * @returns {Object} Validation result with isValid flag and errors array
+   */
+  validateMedicationData(medication) {
+    const errors = [];
+    
+    if (!medication) {
+      errors.push('Medication object is required');
+      return { isValid: false, errors };
+    }
+
+    if (!medication.date_filled) {
+      errors.push('Date filled is required');
+    }
+
+    if (!medication.days_supply || medication.days_supply <= 0) {
+      errors.push('Days supply must be a positive number');
+    }
+
+    if (medication.quantity !== undefined && (medication.quantity <= 0 || !Number.isInteger(medication.quantity))) {
+      errors.push('Quantity must be a positive integer');
+    }
+
+    if (medication.refills_remaining !== undefined && (medication.refills_remaining < 0 || !Number.isInteger(medication.refills_remaining))) {
+      errors.push('Refills remaining must be a non-negative integer');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings: []
+    };
   }
 
   /**
@@ -25,19 +103,28 @@ export class RefillCalculationService {
    * @param {Date|string} dateFilled - Date medication was filled
    * @param {number} daysSupply - Number of days the quantity will last
    * @returns {Date} Date when refill is needed
+   * @throws {Error} When parameters are invalid
    */
   calculateRefillDate(dateFilled, daysSupply) {
-    if (!dateFilled || !daysSupply || daysSupply <= 0) {
-      throw new Error('Invalid date filled or days supply');
+    if (!dateFilled) {
+      throw new Error('Date filled is required');
+    }
+    
+    if (!daysSupply || typeof daysSupply !== 'number' || daysSupply <= 0) {
+      throw new Error('Days supply must be a positive number');
     }
 
     const fillDate = new Date(dateFilled);
     if (isNaN(fillDate.getTime())) {
-      throw new Error('Invalid date filled format');
+      throw new Error(`Invalid date filled format: ${dateFilled}. Expected valid date string or Date object.`);
+    }
+
+    if (fillDate > new Date()) {
+      throw new Error(`Date filled (${fillDate.toISOString()}) cannot be in the future`);
     }
 
     const refillDate = new Date(fillDate);
-    refillDate.setDate(fillDate.getDate() + daysSupply);
+    refillDate.setDate(refillDate.getDate() + daysSupply);
     
     return refillDate;
   }
@@ -51,26 +138,25 @@ export class RefillCalculationService {
    * @returns {Object} Enhanced refill calculation result
    */
   calculateRefillDateWithSchedule(dateFilled, quantity, schedule, options = {}) {
+    if (!dateFilled || !quantity || quantity <= 0) {
+      throw new Error('Invalid parameters: dateFilled and quantity are required and must be positive');
+    }
+
     if (!this.scheduleParser) {
-      // Fallback to basic calculation if no schedule parser available
       console.warn('No schedule parser available, using basic refill calculation');
       return {
         refillDate: this.calculateRefillDate(dateFilled, options.daysSupply || 30),
         calculationMethod: 'basic',
         consumptionRate: 1,
         actualDaysSupply: options.daysSupply || 30,
-        scheduleUsed: false
+        scheduleUsed: false,
+        reason: 'No schedule parser available'
       };
     }
 
     try {
-      // Calculate consumption rate based on schedule
       const consumptionRate = this.calculateConsumptionRate(schedule, options.dateRange || 30);
-      
-      // Calculate actual days supply based on consumption pattern
       const actualDaysSupply = Math.ceil(quantity / consumptionRate);
-      
-      // Calculate refill date
       const refillDate = this.calculateRefillDate(dateFilled, actualDaysSupply);
       
       return {
@@ -80,19 +166,24 @@ export class RefillCalculationService {
         actualDaysSupply,
         scheduleUsed: true,
         originalDaysSupply: options.daysSupply,
-        schedule: schedule
+        schedule: schedule,
+        calculationDetails: {
+          quantity,
+          consumptionRate,
+          dateRange: options.dateRange || 30
+        }
       };
     } catch (error) {
       console.warn('Schedule-enhanced calculation failed, falling back to basic:', error.message);
       
-      // Fallback to basic calculation
       return {
         refillDate: this.calculateRefillDate(dateFilled, options.daysSupply || 30),
         calculationMethod: 'basic_fallback',
         consumptionRate: 1,
         actualDaysSupply: options.daysSupply || 30,
         scheduleUsed: false,
-        error: error.message
+        error: error.message,
+        reason: 'Schedule calculation failed, using basic method'
       };
     }
   }
@@ -101,47 +192,53 @@ export class RefillCalculationService {
    * Calculate consumption rate based on medication schedule
    * @param {string} schedule - Medication schedule text
    * @param {number} dateRange - Number of days to analyze (default: 30)
-   * @returns {number} Average daily consumption rate
+   * @returns {number} Average consumption rate (doses per day)
    */
   calculateConsumptionRate(schedule, dateRange = 30) {
-    if (!this.scheduleParser || !schedule) {
-      return 1; // Default to daily consumption
+    if (!this.scheduleParser) {
+      console.warn('No schedule parser available, using default consumption rate');
+      return 1;
+    }
+
+    if (!schedule) {
+      console.warn('No schedule provided, using default consumption rate');
+      return 1;
     }
 
     try {
-      let totalDoses = 0;
-      const today = new Date();
-      
-      // Handle special schedule patterns that can't be determined by day-by-day analysis
       const scheduleText = schedule.toLowerCase();
-      if (scheduleText.includes('twice daily') || scheduleText.includes('2 times daily') || scheduleText.includes('bid')) {
-        return 2; // 2 doses per day
-      }
-      if (scheduleText.includes('three times daily') || scheduleText.includes('3 times daily') || scheduleText.includes('tid')) {
-        return 3; // 3 doses per day
-      }
-      if (scheduleText.includes('four times daily') || scheduleText.includes('4 times daily') || scheduleText.includes('qid')) {
-        return 4; // 4 doses per day
+      
+      if (scheduleText.includes('twice daily') || scheduleText.includes('2 times daily') || 
+          scheduleText.includes('bid') || scheduleText.includes('two times daily')) {
+        return 2;
       }
       
-      // Calculate how many doses would be taken in the date range for other patterns
+      if (scheduleText.includes('three times daily') || scheduleText.includes('3 times daily') || 
+          scheduleText.includes('tid') || scheduleText.includes('three times daily')) {
+        return 3;
+      }
+      
+      if (scheduleText.includes('four times daily') || scheduleText.includes('4 times daily') || 
+          scheduleText.includes('qid') || scheduleText.includes('four times daily')) {
+        return 4;
+      }
+      
+      const today = new Date();
+      let totalDoses = 0;
+      
       for (let i = 0; i < dateRange; i++) {
         const testDate = new Date(today);
         testDate.setDate(today.getDate() + i);
         
-        // Use the existing schedule parser logic to determine if medication should be taken
         if (this.scheduleParser.shouldTakeOnDate(schedule, i, testDate, today)) {
           totalDoses++;
         }
       }
       
-      const consumptionRate = totalDoses / dateRange;
-      console.log(`📊 Calculated consumption rate for "${schedule}": ${consumptionRate} doses per day over ${dateRange} days`);
-      
-      return consumptionRate;
+      return totalDoses / dateRange;
     } catch (error) {
       console.warn('Failed to calculate consumption rate from schedule:', error.message);
-      return 1; // Fallback to daily consumption
+      return 1;
     }
   }
 
@@ -150,17 +247,21 @@ export class RefillCalculationService {
    * @param {Date|string} dateFilled - Date medication was filled
    * @param {number} daysSupply - Number of days the quantity will last
    * @returns {number} Days until refill needed (negative if overdue)
+   * @throws {Error} When parameters are invalid
    */
   daysUntilRefill(dateFilled, daysSupply) {
-    const refillDate = this.calculateRefillDate(dateFilled, daysSupply);
-    const today = new Date();
-    
-    // Reset time to start of day for accurate day calculation
-    today.setHours(0, 0, 0, 0);
-    refillDate.setHours(0, 0, 0, 0);
-    
-    const diffTime = refillDate - today;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    try {
+      const refillDate = this.calculateRefillDate(dateFilled, daysSupply);
+      const today = new Date();
+      
+      today.setHours(0, 0, 0, 0);
+      refillDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = refillDate - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (error) {
+      throw new Error(`Failed to calculate days until refill: ${error.message}`);
+    }
   }
 
   /**
@@ -205,18 +306,20 @@ export class RefillCalculationService {
    * @returns {Array} Array of reminder objects with dates and types
    */
   generateRefillReminders(medication) {
-    const { date_filled, days_supply, refills_remaining, refill_expiry_date, quantity, schedule } = medication;
-    
-    if (!date_filled) {
+    const validation = this.validateMedicationData(medication);
+    if (!validation.isValid) {
+      console.warn('Invalid medication data for refill reminders:', validation.errors);
       return [];
     }
 
+    const { date_filled, days_supply, refills_remaining, refill_expiry_date, quantity, schedule } = medication;
+    
     let refillDate;
     let calculationDetails = {};
     let effectiveDaysSupply = days_supply;
     
-    // Use schedule-enhanced calculation if available
-    if (this.scheduleParser && schedule && quantity) {
+
+    if (this.isScheduleParserAvailable() && schedule && quantity) {
       try {
         const enhancedResult = this.calculateRefillDateWithSchedule(
           date_filled, 
@@ -227,32 +330,30 @@ export class RefillCalculationService {
         refillDate = enhancedResult.refillDate;
         calculationDetails = enhancedResult;
         
-        // Set effective days supply for the enhanced calculation so other methods can use it
         if (enhancedResult.actualDaysSupply) {
           effectiveDaysSupply = enhancedResult.actualDaysSupply;
         }
-        
-        console.log(`📊 Using schedule-enhanced refill calculation for ${medication.name}:`, calculationDetails);
       } catch (error) {
-        console.warn('Schedule-enhanced calculation failed, falling back to basic:', error.message);
-        refillDate = this.calculateRefillDate(date_filled, effectiveDaysSupply);
-        calculationDetails = { calculationMethod: 'basic_fallback' };
+        console.warn('Enhanced calculation failed, falling back to basic:', error.message);
+        refillDate = this.calculateRefillDate(date_filled, days_supply);
+        calculationDetails = {
+          calculationMethod: 'basic_fallback',
+          reason: 'Enhanced calculation failed',
+          error: error.message
+        };
       }
-    } else if (effectiveDaysSupply) {
-      // Fallback to basic calculation
-      refillDate = this.calculateRefillDate(date_filled, effectiveDaysSupply);
-      calculationDetails = { calculationMethod: 'basic' };
     } else {
-      // No refill data available
-      return [];
+      refillDate = this.calculateRefillDate(date_filled, days_supply);
+      calculationDetails = {
+        calculationMethod: 'basic',
+        reason: this.isScheduleParserAvailable() ? 'No schedule or quantity data' : 'No schedule parser available'
+      };
     }
 
     const reminders = [];
     const today = new Date();
 
-    // Only create reminders if refill is in the future
     if (refillDate > today) {
-      // Early reminder (14 days before)
       const earlyDate = new Date(refillDate);
       earlyDate.setDate(refillDate.getDate() - this.reminderTiming.early);
       
@@ -264,7 +365,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Primary reminder (7 days before)
       const primaryDate = new Date(refillDate);
       primaryDate.setDate(refillDate.getDate() - this.reminderTiming.primary);
       
@@ -276,7 +376,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Urgent reminder (3 days before)
       const urgentDate = new Date(refillDate);
       urgentDate.setDate(refillDate.getDate() - this.reminderTiming.urgent);
       
@@ -288,7 +387,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Final reminder (1 day before)
       const finalDate = new Date(refillDate);
       finalDate.setDate(refillDate.getDate() - this.reminderTiming.final);
       
@@ -301,10 +399,10 @@ export class RefillCalculationService {
       }
     }
 
-    // Low supply warning if applicable
     if (this.isSupplyLow(date_filled, days_supply)) {
       const lowSupplyDate = today.toISOString().split('T')[0];
-      console.log(`🔍 Low supply reminder date calculation:`, {
+      
+      console.log('Low supply calculation:', {
         today: today,
         todayISO: today.toISOString(),
         splitResult: today.toISOString().split('T'),
@@ -318,7 +416,6 @@ export class RefillCalculationService {
       });
     }
 
-    // Refill expiry warning if applicable
     if (refill_expiry_date) {
       const expiryDate = new Date(refill_expiry_date);
       const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
@@ -351,7 +448,6 @@ export class RefillCalculationService {
     let calculationDetails = {};
     let effectiveDaysSupply = days_supply;
     
-    // Use schedule-enhanced calculation if available
     if (this.scheduleParser && schedule && quantity) {
       try {
         const enhancedResult = this.calculateRefillDateWithSchedule(
@@ -381,11 +477,9 @@ export class RefillCalculationService {
     const reminders = [];
     const today = new Date();
 
-    // Only create reminders if refill is in the future
     if (refillDate > today) {
       const daysRemaining = Math.ceil((refillDate - today) / (1000 * 60 * 60 * 24));
 
-      // Early reminder (14 days before)
       if (daysRemaining >= this.reminderTiming.early) {
         reminders.push({
           reminder_date: new Date(today.getTime() + (daysRemaining - this.reminderTiming.early) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -395,7 +489,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Primary reminder (7 days before)
       if (daysRemaining >= this.reminderTiming.primary) {
         reminders.push({
           reminder_date: new Date(today.getTime() + (daysRemaining - this.reminderTiming.primary) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -405,7 +498,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Urgent reminder (3 days before)
       if (daysRemaining >= this.reminderTiming.urgent) {
         reminders.push({
           reminder_date: new Date(today.getTime() + (daysRemaining - this.reminderTiming.urgent) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -415,7 +507,6 @@ export class RefillCalculationService {
         });
       }
 
-      // Final warning (1 day before)
       if (daysRemaining >= this.reminderTiming.final) {
         reminders.push({
           reminder_date: new Date(today.getTime() + (daysRemaining - this.reminderTiming.final) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -426,7 +517,6 @@ export class RefillCalculationService {
       }
     }
 
-    // Low supply warning if applicable
     if (this.isSupplyLow(date_filled, effectiveDaysSupply)) {
       const daysRemaining = this.daysOfSupplyRemaining(date_filled, effectiveDaysSupply);
       if (daysRemaining > 0) {
@@ -439,7 +529,6 @@ export class RefillCalculationService {
       }
     }
 
-    // Expired warning
     const daysRemaining = this.daysUntilRefill(date_filled, effectiveDaysSupply);
     if (daysRemaining < 0) {
       reminders.push({
@@ -561,7 +650,6 @@ export class RefillCalculationService {
     let calculationDetails = {};
     let effectiveDaysSupply = days_supply;
 
-    // Use schedule-enhanced calculation if available
     if (this.scheduleParser && schedule && quantity) {
       try {
         const enhancedResult = this.calculateRefillDateWithSchedule(
@@ -573,12 +661,10 @@ export class RefillCalculationService {
         refillDate = enhancedResult.refillDate;
         calculationDetails = enhancedResult;
         
-        // Set effective days supply for the enhanced calculation so other methods can use it
         if (enhancedResult.actualDaysSupply) {
           effectiveDaysSupply = enhancedResult.actualDaysSupply;
         }
         
-        // Calculate days until refill using the enhanced refill date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         refillDate.setHours(0, 0, 0, 0);
@@ -587,7 +673,6 @@ export class RefillCalculationService {
         daysRemaining = Math.max(0, daysUntil);
         isLow = daysRemaining <= this.lowSupplyThreshold;
         
-        console.log(`📊 Using schedule-enhanced status calculation for ${medication.name}:`, calculationDetails);
       } catch (error) {
         console.warn('Schedule-enhanced calculation failed, falling back to basic:', error.message);
         daysUntil = this.daysUntilRefill(date_filled, effectiveDaysSupply);
@@ -597,7 +682,6 @@ export class RefillCalculationService {
         calculationDetails = { calculationMethod: 'basic_fallback' };
       }
     } else if (effectiveDaysSupply) {
-      // Fallback to basic calculation
       daysUntil = this.daysUntilRefill(date_filled, effectiveDaysSupply);
       daysRemaining = this.daysOfSupplyRemaining(date_filled, effectiveDaysSupply);
       isLow = this.isSupplyLow(date_filled, effectiveDaysSupply);
@@ -635,7 +719,7 @@ export class RefillCalculationService {
       refillsRemaining: refills_remaining || 0,
       refillExpiryDate: refill_expiry_date,
       message: this.generateStatusMessage(status, daysUntil, medication.name, refills_remaining),
-      calculationDetails // Include enhanced calculation information
+      calculationDetails
     };
   }
 
@@ -679,11 +763,9 @@ export class RefillCalculationService {
     }
 
     try {
-      // Basic calculation (pharmacy assumption)
       const basicRefillDate = this.calculateRefillDate(dateFilled, pharmacyDaysSupply);
       const basicDaysUntil = this.daysUntilRefill(dateFilled, pharmacyDaysSupply);
       
-      // Enhanced calculation (schedule-aware)
       const enhancedResult = this.calculateRefillDateWithSchedule(
         dateFilled, 
         quantity, 
@@ -752,7 +834,6 @@ export class RefillCalculationService {
     const errors = [];
     const { date_filled, quantity, days_supply, refills_remaining } = refillData;
 
-    // Validate date_filled
     if (date_filled) {
       const fillDate = new Date(date_filled);
       if (isNaN(fillDate.getTime())) {
@@ -762,21 +843,18 @@ export class RefillCalculationService {
       }
     }
 
-    // Validate quantity
     if (quantity !== undefined && quantity !== null) {
       if (!Number.isInteger(quantity) || quantity <= 0) {
         errors.push('Quantity must be a positive integer');
       }
     }
 
-    // Validate days_supply
     if (days_supply !== undefined && days_supply !== null) {
       if (!Number.isInteger(days_supply) || days_supply <= 0 || days_supply > 365) {
         errors.push('Days supply must be between 1 and 365');
       }
     }
 
-    // Validate refills_remaining
     if (refills_remaining !== undefined && refills_remaining !== null) {
       if (!Number.isInteger(refills_remaining) || refills_remaining < 0) {
         errors.push('Refills remaining must be a non-negative integer');
