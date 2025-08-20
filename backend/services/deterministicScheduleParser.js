@@ -65,7 +65,7 @@ export class DeterministicScheduleParser {
     const year = parseInt(dateParts[0]);
     const month = parseInt(dateParts[1]) - 1;
     const day = parseInt(dateParts[2]);
-    const targetDateTime = new Date(year, month, day);
+    const targetDateTime = new Date(Date.UTC(year, month, day));
 
     medications.forEach(med => {
       const daysSinceStart = this.calculateDaysSinceStart(med.created_at, targetDateTime);

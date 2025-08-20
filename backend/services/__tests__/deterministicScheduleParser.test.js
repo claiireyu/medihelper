@@ -716,9 +716,10 @@ describe('DeterministicScheduleParser', () => {
         }
       ];
       
-      // Based on debug output: 2024-01-02 gives daysSinceStart=2, which % 2 = 0 (should take)
-      // So we need a date that gives daysSinceStart=1 or 3 (odd number)
-      const targetDate = '2024-01-01'; // This gives daysSinceStart=1, should NOT take (1 % 2 = 1)
+      // For medication created on 2024-01-01:
+      // 2024-01-01: daysSinceStart = 0, 0 % 2 = 0 (should take)
+      // 2024-01-02: daysSinceStart = 1, 1 % 2 = 1 (should NOT take)
+      const targetDate = '2024-01-02'; // This gives daysSinceStart=1, should NOT take (1 % 2 = 1)
       
       const result = parser.parseSchedule(medications, targetDate);
       
@@ -738,8 +739,10 @@ describe('DeterministicScheduleParser', () => {
         }
       ];
       
-      // Based on debug output: 2024-01-02 gives daysSinceStart=2, which % 2 = 0 (should take)
-      const targetDate = '2024-01-02'; // This gives daysSinceStart=2, should take (2 % 2 = 0)
+      // For medication created on 2024-01-01:
+      // 2024-01-01: daysSinceStart = 0, 0 % 2 = 0 (should take)
+      // 2024-01-02: daysSinceStart = 1, 1 % 2 = 1 (should NOT take)
+      const targetDate = '2024-01-01'; // This gives daysSinceStart=0, should take (0 % 2 = 0)
       
       const result = parser.parseSchedule(medications, targetDate);
       
