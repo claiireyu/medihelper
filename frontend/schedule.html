@@ -823,7 +823,7 @@
                         const dateString = `${year}-${month}-${day}`;
                         
                         
-                        const response = await makeTimezoneAwareAPICall(API.getMedicationSchedule, dateString, showTakenDoses);
+                        const response = await makeTimezoneAwareAPICall(window.API.getMedicationSchedule, dateString, showTakenDoses);
                         
                         const data = await response.json();
                         

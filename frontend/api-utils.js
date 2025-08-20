@@ -1,9 +1,8 @@
-// Environment-aware API configuration
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '/api'  // Use relative path in production
+
+const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production')
+  ? '/api'  
   : 'http://localhost:8000/api';
 
-// Fallback for non-module environments (like direct HTML usage)
 if (typeof window !== 'undefined') {
   window.API_BASE = API_BASE;
 }

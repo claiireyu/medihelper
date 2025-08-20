@@ -314,12 +314,25 @@
     <!-- Add bottom padding to account for fixed navigation -->
     <div class="h-20"></div>
 
-    <!-- Load API utilities first -->
-    <script type="module" src="api-utils.js"></script>
-
     <script>
         let selectedMedication = null;
         let capturedImageFile = null;
+        async function waitForAPI() {
+            if (window.API) {
+                return;
+            }
+            
+            return new Promise(resolve => {
+                const checkAPI = () => {
+                    if (window.API) {
+                        resolve();
+                    } else {
+                        setTimeout(checkAPI, 100);
+                    }
+                };
+                checkAPI();
+            });
+        }
 
         
         function ensureI18nLoaded() {
@@ -417,13 +430,19 @@
                 if (window.authManager) {
                     if (window.authManager.currentUser !== undefined) {
                         hideLoading();
-                        loadMedications();
-                        setupEventListeners();
+                        // Ensure API is loaded before calling loadMedications
+                        waitForAPI().then(() => {
+                            loadMedications();
+                            setupEventListeners();
+                        });
                         return;
                     } else if (window.authManager.isAuthenticated && window.authManager.isAuthenticated()) {
                         hideLoading();
-                        loadMedications();
-                        setupEventListeners();
+                        // Ensure API is loaded before calling loadMedications
+                        waitForAPI().then(() => {
+                            loadMedications();
+                            setupEventListeners();
+                        });
                         return;
                     }
                 }
@@ -484,7 +503,10 @@
                     return;
                 }
                 
-                const response = await API.getMedications();
+                // Wait for API to be available
+                await waitForAPI();
+                
+                const response = await window.API.getMedications();
                 
                 const data = await response.json();
                 
@@ -550,7 +572,7 @@
                 }
                 
 
-                const eligibilityResponse = await API.checkMedicationEligibility(medicationId);
+                const eligibilityResponse = await window.API.checkMedicationEligibility(medicationId);
                 
                 
                 const contentType = eligibilityResponse.headers.get('content-type');
@@ -571,7 +593,7 @@
                 }
 
                 
-                const response = await API.getMedications();
+                const response = await window.API.getMedications();
                 
                 const data = await response.json();
                 

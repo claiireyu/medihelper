@@ -261,6 +261,23 @@
     <div class="h-20"></div>
 
     <script>
+        async function waitForAPI() {
+            if (window.API) {
+                return;
+            }
+            
+            return new Promise(resolve => {
+                const checkAPI = () => {
+                    if (window.API) {
+                        resolve();
+                    } else {
+                        setTimeout(checkAPI, 100);
+                    }
+                };
+                checkAPI();
+            });
+        }
+
         async function loadUserData() {
             try {
                 await Promise.all([
@@ -275,7 +292,9 @@
 
         async function loadDashboardStats() {
             try {
-                const response = await API.getDashboardStats();
+                // Ensure API is available
+                await waitForAPI();
+                const response = await window.API.getDashboardStats();
                 const data = await response.json();
                 
                 if (data.success) {
@@ -323,7 +342,8 @@
 
         async function loadNextDose() {
             try {
-                const response = await API.getNextDose();
+                await waitForAPI();
+                const response = await window.API.getNextDose();
                 const data = await response.json();
                 
                 if (data.success && data.nextDose) {
@@ -339,13 +359,14 @@
 
         async function loadTodaysSchedule() {
             try {
+                await waitForAPI();
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 const day = String(today.getDate()).padStart(2, '0');
                 const serverDate = `${year}-${month}-${day}`;
                 
-                const response = await makeTimezoneAwareAPICall(API.getMedicationSchedule, serverDate);
+                const response = await makeTimezoneAwareAPICall(window.API.getMedicationSchedule, serverDate);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -477,13 +498,14 @@
         
         async function loadProgressStats() {
             try {
+                await waitForAPI();
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 const day = String(today.getDate()).padStart(2, '0');
                 const serverDate = `${year}-${month}-${day}`;
                 
-                const response = await makeTimezoneAwareAPICall(API.getMedicationSchedule, serverDate, true);
+                const response = await makeTimezoneAwareAPICall(window.API.getMedicationSchedule, serverDate, true);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -767,6 +789,5 @@
     <script type="module" src="api-utils.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="update-pages-i18n.js"></script>
 </body>
 </html> 

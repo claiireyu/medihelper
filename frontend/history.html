@@ -450,7 +450,7 @@
                 const day = String(today.getDate()).padStart(2, '0');
                 const todayString = `${year}-${month}-${day}`;
                 
-                const scheduleResponse = await makeTimezoneAwareAPICall(API.getMedicationSchedule, todayString, true);
+                const scheduleResponse = await makeTimezoneAwareAPICall(window.API.getMedicationSchedule, todayString, true);
                 const scheduleData = await scheduleResponse.json();
                 
                 let takenToday = 0;
@@ -473,13 +473,13 @@
                 document.getElementById('takenToday').textContent = takenToday;
                 document.getElementById('pendingToday').textContent = Math.max(0, pendingToday);
                 
-                const dashboardResponse = await API.getDashboardStats();
+                const dashboardResponse = await window.API.getDashboardStats();
                 const dashboardData = await dashboardResponse.json();
                 
                 if (dashboardData.success) {
                     document.getElementById('totalMedications').textContent = dashboardData.stats.activeMedications;
                 } else {
-                    const medicationsResponse = await API.getMedications();
+                    const medicationsResponse = await window.API.getMedications();
                     const medicationsData = await medicationsResponse.json();
                     
                     if (medicationsData.success) {
@@ -499,7 +499,7 @@
             showLoading();
             
             try {
-                const response = await API.getDoseHistory(days);
+                const response = await window.API.getDoseHistory(days);
                 const data = await response.json();
                 
                 displayRecentHistory(data.takenDoses || []);
@@ -608,7 +608,7 @@
 
         async function loadAllMedications() {
             try {
-                const response = await API.getMedications();
+                const response = await window.API.getMedications();
                 const data = await response.json();
                 
                 if (data.success) {

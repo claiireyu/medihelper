@@ -455,7 +455,6 @@ describe('RefillCalculationService - Consolidated Tests', () => {
       const result = service.daysUntilRefill(dateFilled, daysSupply);
       
       expect(typeof result).toBe('number');
-      // The result can be negative if the refill date has passed
       expect(result).toBeDefined();
     });
 

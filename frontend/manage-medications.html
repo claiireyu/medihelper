@@ -536,8 +536,8 @@
             showLoading();
             
             try {
-                const response = await API.getMedications();
-                const data = await response.json();
+                            const response = await window.API.getMedications();
+            const data = await response.json();
                 
                 if (data.success && data.medications.length > 0) {
                     displayMedications(data.medications);
@@ -669,7 +669,7 @@
 
         async function editMedication(medicationId) {
             try {
-                const response = await API.getMedications();
+                const response = await window.API.getMedications();
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -702,7 +702,7 @@
 
         async function viewRefillHistory(medicationId) {
             try {
-                const response = await API.getMedicationRefills(medicationId);
+                const response = await window.API.getMedicationRefills(medicationId);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -913,7 +913,7 @@
             showLoading();
             
             try {
-                const response = await API.deleteMedication(medicationToDelete);
+                const response = await window.API.deleteMedication(medicationToDelete);
                 
                 const result = await response.json();
                 
@@ -1324,7 +1324,7 @@
             showLoading();
             
             try {
-                const response = await API.updateMedication(currentMedication.id, formData);
+                const response = await window.API.updateMedication(currentMedication.id, formData);
                 
                 const result = await response.json();
                 
