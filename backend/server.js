@@ -1921,9 +1921,6 @@ app.post('/api/schedule/warm-cache', isAuthenticated, async (req, res) => {
   }
 });
 
-// Removed unused /api/force-refresh-schedule endpoint
-
-// Removed unused /api/health endpoint
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));

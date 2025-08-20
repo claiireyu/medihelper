@@ -509,7 +509,6 @@
                 clearTimeout(refreshTimeout);
                 
                 refreshTimeout = setTimeout(() => {
-                    // Simplified: always reload schedule; remove broken force-refresh behavior
                     loadSchedule();
                     refreshClickCount = 0;
                 }, 300);
