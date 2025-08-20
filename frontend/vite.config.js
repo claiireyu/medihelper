@@ -33,5 +33,11 @@ export default defineConfig({
         'verify': 'verify.html'
       }
     }
+  },
+  define: {
+    __DEV__: process.env.NODE_ENV !== 'production',
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 })
