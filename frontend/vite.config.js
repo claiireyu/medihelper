@@ -33,15 +33,5 @@ export default defineConfig({
         'verify': 'verify.html'
       }
     }
-  },
-  define: {
-    global: 'globalThis',
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: 'globalThis'
-      }
-    }
   }
 })

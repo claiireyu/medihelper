@@ -23,13 +23,11 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./frontend
-      run: npm ci
+      run: npm install
       
     - name: Check build
       working-directory: ./frontend
-      env:
-        NODE_ENV: production
-      run: npm run build:ci
+      run: npm run build
 
   # Quick backend check
   backend-check:
@@ -49,7 +47,7 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./backend
-      run: npm ci
+      run: npm install
       
     - name: Run unit tests
       working-directory: ./backend

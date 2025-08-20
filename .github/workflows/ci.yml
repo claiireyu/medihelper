@@ -25,13 +25,11 @@ jobs:
         
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: npm ci
+      run: npm install
       
     - name: Build frontend
       working-directory: ./frontend
-      env:
-        NODE_ENV: production
-      run: npm run build:ci
+      run: npm run build
       
     - name: Upload frontend build artifacts
       uses: actions/upload-artifact@v4
@@ -58,7 +56,7 @@ jobs:
         
     - name: Install backend dependencies
       working-directory: ./backend
-      run: npm ci
+      run: npm install
       
     - name: Run backend unit tests
       working-directory: ./backend
@@ -92,8 +90,8 @@ jobs:
         
     - name: Install dependencies
       run: |
-        cd frontend && npm ci
-        cd ../backend && npm ci
+        cd frontend && npm install
+        cd ../backend && npm install
         
     - name: Run security audit
       run: |
@@ -124,7 +122,7 @@ jobs:
         
     - name: Install backend dependencies
       working-directory: ./backend
-      run: npm ci --only=production
+      run: npm install --only=production
       
     - name: Deploy notification
       run: |
