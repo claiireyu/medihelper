@@ -40,10 +40,10 @@ A full-stack web application designed to help users, especially seniors, manage 
 
 ## Prerequisites
 
-- Node.js 18+ 
+- Node.js 20.x (use `nvm use` to switch to the correct version)
 - PostgreSQL 12+
-- Google OAuth 2.0 credentials
-- Google Generative AI API key
+- Google OAuth 2.0 credentials (optional for local development)
+- Google Generative AI API key (optional for local development)
 
 ## Installation
 
@@ -60,7 +60,7 @@ npm install
 cp env.template .env
 ```
 
-Edit `.env` with your configuration:
+Edit `.env` with your configuration (the template includes all required fields):
 ```env
 # Database Configuration
 DB_USER=your_db_user
@@ -69,21 +69,40 @@ DB_NAME=medihelper
 DB_PASSWORD=your_db_password
 DB_PORT=5432
 
+# Session Secret (required)
+SESSION_SECRET=your_session_secret
+
+# Frontend URL for CORS
+FRONTEND_URL=http://localhost:5174
+
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:8000/auth/google/callback
 
-# Google AI
-GOOGLE_AI_API_KEY=your_google_ai_key
-
-# Session Secret
-SESSION_SECRET=your_session_secret
+# Google AI (Gemini)
+GEMINI_API_KEY=your_gemini_api_key
 ```
+
+**Note:** Google OAuth and Gemini AI keys are optional for local development. Without them:
+- **Gemini AI**: Photo extraction will use fallback values ("Unknown Medication", etc.) and require manual entry
 
 ### 3. Database Setup
 ```sql
 CREATE DATABASE medihelper;
--- Run your database schema (contact maintainer for schema details)
+```
+
+**For testing:** If you plan to run integration tests, also create a test database:
+```sql
+CREATE DATABASE medihelper_tests;
+```
+Then add to your `.env`:
+```env
+TEST_DB_NAME=medihelper_tests
+TEST_DB_USER=your_db_user
+TEST_DB_PASSWORD=your_db_password
+TEST_DB_HOST=localhost
+TEST_DB_PORT=3000
 ```
 
 ### 4. Frontend Setup
@@ -97,11 +116,15 @@ npm install
 # Terminal 1 - Backend
 cd backend
 npm run dev
+# Backend will start on http://localhost:8000
 
 # Terminal 2 - Frontend  
 cd frontend
 npm run dev
+# Frontend will start on http://localhost:5174
 ```
+
+**Note:** The backend CORS is configured for frontend port 5174. If you use a different port, update the `FRONTEND_URL` in your `.env` file.
 
 ## Testing
 
@@ -145,7 +168,7 @@ medihelper/
 └── README.md
 ```
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `GET /api/auth/user` — Get current authenticated user
