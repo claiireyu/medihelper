@@ -70,6 +70,8 @@ class AuthGuard {
     
     updateTextContent() {
         if (window.i18n) {
+            // Update text content when language changes
+            // This can be implemented later if needed
         }
     }
 }

@@ -1,19 +1,13 @@
 
-const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production')
-  ? '/api'  
-  : 'http://localhost:8000/api';
+const API_BASE = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+  ? 'http://localhost:8000/api'
+  : '/api';
 
 if (typeof window !== 'undefined') {
   window.API_BASE = API_BASE;
 }
 
-function getUserId() {
-    if (window.authManager && window.authManager.isAuthenticated()) {
-        return window.authManager.getUserId();
-    }
-    
-    return localStorage.getItem('userId') || '1';
-}
+// getUserId function removed as it's not being used
 
 function getUserTimezone() {
     try {
@@ -51,6 +45,9 @@ async function makeAuthenticatedRequest(url, options = {}) {
         }
         
         if (response.status >= 400) {
+            // Handle error responses
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
         }
         
         const contentType = response.headers.get('content-type');
@@ -62,8 +59,6 @@ async function makeAuthenticatedRequest(url, options = {}) {
             console.error('Response preview:', text.substring(0, 200));
             throw new Error(`API returned ${response.status} ${response.statusText} - expected JSON but got ${contentType || 'unknown content type'}`);
         }
-        
-        return response;
     } catch (error) {
         if (error.message === 'Authentication required') {
             throw error;

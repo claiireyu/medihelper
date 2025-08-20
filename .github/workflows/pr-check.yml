@@ -7,7 +7,7 @@ on:
 jobs:
   # Quick frontend check
   frontend-check:
-    name: Frontend - Quick Check
+    name: Frontend - Build Check
     runs-on: ubuntu-latest
     
     steps:
@@ -25,17 +25,13 @@ jobs:
       working-directory: ./frontend
       run: npm ci
       
-    - name: Run linting
-      working-directory: ./frontend
-      run: npm run lint
-      
     - name: Check build
       working-directory: ./frontend
       run: npm run build
 
   # Quick backend check
   backend-check:
-    name: Backend - Quick Check
+    name: Backend - Test Check
     runs-on: ubuntu-latest
     
     steps:

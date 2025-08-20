@@ -318,7 +318,7 @@ const en = {
     noMedicationsScheduled: 'No medications scheduled',
     quickVerify: 'Quick Verify',
     viewHistory: 'View History',
-    refillReminders: 'Refill Reminders',
+    refillRemindersTitle: 'Refill Reminders',
     medicationsNeedAttention: 'Medications that need attention',
     noRefillReminders: 'No refill reminders today',
     checkOtherDates: 'Check other dates for upcoming refill reminders',
@@ -408,7 +408,7 @@ const en = {
     }
   },
 
-  // Action cards
+      // Action cards
   actions: {
     addMedication: 'Add Medication',
     scanOrUpload: 'Scan or upload medication',
@@ -433,7 +433,7 @@ const en = {
     quickActions: 'Quick Actions',
     viewSchedule: 'View Schedule',
     viewHistory: 'View History',
-    addMedication: 'Add Medication',
+    verifyAddMedication: 'Add Medication',
     medicationTaken: 'Medication Taken!',
     medicationRecordedSuccessfully: 'Your medication has been recorded successfully.',
     continue: 'Continue',

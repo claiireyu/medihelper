@@ -157,9 +157,9 @@ class AuthManager {
     // Load and apply user's saved language preference
     loadUserLanguagePreference() {
         if (window.i18n) {
-            const languageLoaded = window.i18n.reloadSavedLanguage();
-        } else {
+            window.i18n.reloadSavedLanguage();
         }
+        // No action needed if i18n is not available
     }
 }
 
