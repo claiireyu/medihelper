@@ -733,7 +733,8 @@ const en = {
       dueInDays: 'due in {days} days',
       dueTomorrow: 'due tomorrow',
       urgent: 'URGENT:',
-      finalReminder: 'FINAL REMINDER:'
+      finalReminder: 'FINAL REMINDER:',
+      modalTitle: 'Refill Reminders'
     },
     
     // Refill History
@@ -1583,7 +1584,8 @@ const zh = {
       dueInDays: '距离补充天数',
       dueTomorrow: '明天',
       urgent: '紧急：',
-      finalReminder: '最终提醒：'
+      finalReminder: '最终提醒：',
+      modalTitle: '补充提醒'
     },
     
     // Refill History

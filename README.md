@@ -38,14 +38,14 @@ A full-stack web application designed to help users, especially seniors, manage 
 - **Routing**: React Router DOM
 - **Internationalization**: Custom i18n implementation
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js 18+ 
 - PostgreSQL 12+
 - Google OAuth 2.0 credentials
 - Google Generative AI API key
 
-## 🚀 Installation
+## Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -124,7 +124,7 @@ cd frontend
 npm run lint
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 medihelper/
@@ -195,6 +195,6 @@ Intelligent refill scheduling considering:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 
